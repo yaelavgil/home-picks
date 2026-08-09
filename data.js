@@ -578,3 +578,53 @@ const COLORS = [
   "group": "כחולים"
  }
 ];
+const HANDLES = [
+ {
+  "id": "H1",
+  "name": "ידית צינור וינטאג'",
+  "model": "6880",
+  "price": null,
+  "img": "img/handle01.jpg",
+  "url": "https://www.domicile.co.il/product/%d7%99%d7%93%d7%99%d7%aa-%d7%a6%d7%99%d7%a0%d7%95%d7%a8-%d7%95%d7%99%d7%a0%d7%98%d7%90%d7%92-%d7%93%d7%92%d7%9d-6880/"
+ },
+ {
+  "id": "H2",
+  "name": "ידית עם כדורים בקצוות בסגנון וינטג'",
+  "model": "6988",
+  "price": null,
+  "img": "img/handle02.jpg",
+  "url": "https://www.domicile.co.il/product/%d7%99%d7%93%d7%99%d7%aa-%d7%a2%d7%9d-%d7%9b%d7%93%d7%95%d7%a8%d7%99%d7%9d-%d7%91%d7%a7%d7%a6%d7%95%d7%95%d7%aa-%d7%91%d7%a1%d7%92%d7%a0%d7%95%d7%9f-%d7%95%d7%99%d7%a0%d7%98%d7%92-%d7%93%d7%92/"
+ },
+ {
+  "id": "H3",
+  "name": "ידית עם חיבורים גליליים בקצוות",
+  "model": "6048",
+  "price": null,
+  "img": "img/handle03.jpg",
+  "url": "https://www.domicile.co.il/product/%d7%99%d7%93%d7%99%d7%aa-%d7%a2%d7%9d-%d7%97%d7%99%d7%91%d7%95%d7%a8%d7%99%d7%9d-%d7%92%d7%9c%d7%99%d7%9c%d7%99%d7%99%d7%9d-%d7%91%d7%a7%d7%a6%d7%95%d7%95%d7%aa-%d7%93%d7%92%d7%9d-6048/"
+ },
+ {
+  "id": "H4",
+  "name": "ידית צינור עם בסיס ברגליים",
+  "model": "6160",
+  "price": null,
+  "img": "img/handle04.jpg",
+  "url": "https://www.domicile.co.il/product/%d7%99%d7%93%d7%99%d7%aa-%d7%a6%d7%99%d7%a0%d7%95%d7%a8-%d7%a2%d7%9d-%d7%91%d7%a1%d7%99%d7%a1-%d7%91%d7%a8%d7%92%d7%9c%d7%99%d7%99%d7%9d-%d7%93%d7%92%d7%9d-6160/"
+ },
+ {
+  "id": "H5",
+  "name": "ידית וינטאג' בסגנון כפרי",
+  "model": "5190",
+  "price": null,
+  "img": "img/handle05.jpg",
+  "url": "https://www.domicile.co.il/product/%d7%99%d7%93%d7%99%d7%aa-%d7%95%d7%99%d7%a0%d7%98%d7%90%d7%92-%d7%91%d7%a1%d7%92%d7%a0%d7%95%d7%9f-%d7%9b%d7%a4%d7%a8%d7%99-%d7%93%d7%92%d7%9d-5190/"
+ },
+ {
+  "id": "H6",
+  "name": "ידית ריהוט לארונות ומטבחים",
+  "model": "F010",
+  "price": null,
+  "img": "img/handle06.jpg",
+  "url": "https://www.domicile.co.il/product/%d7%99%d7%93%d7%99%d7%aa-%d7%a8%d7%99%d7%94%d7%95%d7%98-%d7%9c%d7%90%d7%a8%d7%95%d7%a0%d7%95%d7%aa-%d7%95%d7%9e%d7%98%d7%91%d7%97%d7%99%d7%9d-%d7%93%d7%92%d7%9d-f010/"
+ }
+];
