@@ -431,6 +431,7 @@ function renderColorGrid(){
       <div class="swatch" style="background:#${col.hex}"></div>
       <div class="name">${col.name}</div>
       <div class="meta">${col.code} · #${col.hex.toUpperCase()} · ${col.group}</div>
+      <div class="row"><a class="plink" href="${col.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">לצפייה בנירלט ↗</a></div>
     `;
     cg.appendChild(c);
   });
@@ -550,7 +551,7 @@ function renderSum(){
     </table>` : '<h3>🗄️ ידיות למטבח</h3><p class="meta">לא נבחרו פריטים</p>';
 
   const keptC=COLORS.filter(c=>(state[c.id]||0)>0);
-  const colorRows=keptC.map((c,i)=>`<tr><td>${i+1}</td><td><span class="sw" style="background:#${c.hex}"></span></td><td>${c.name}</td><td>${c.code}</td><td dir="ltr">#${c.hex.toUpperCase()}</td><td>${c.group}</td></tr>`).join('');
+  const colorRows=keptC.map((c,i)=>`<tr><td>${i+1}</td><td><span class="sw" style="background:#${c.hex}"></span></td><td>${c.name}</td><td>${c.code}</td><td dir="ltr">#${c.hex.toUpperCase()}</td><td>${c.group}</td><td><a href="${c.url}" target="_blank" rel="noopener">לצבע ↗</a></td></tr>`).join('');
   const colorsTable = keptC.length ? `
     <h3>🎨 גוונים לקירות <span class="meta">(${keptC.length})</span>
       <span class="tools">
@@ -558,7 +559,7 @@ function renderSum(){
         <button onclick="copyTable('colors','text')">📋 העתקה כטקסט</button>
       </span></h3>
     <table class="sumtable">
-      <thead><tr><th>#</th><th>גוון</th><th>שם</th><th>קוד</th><th>HEX</th><th>משפחה</th></tr></thead>
+      <thead><tr><th>#</th><th>גוון</th><th>שם</th><th>קוד</th><th>HEX</th><th>משפחה</th><th>קישור לצבע</th></tr></thead>
       <tbody>${colorRows}</tbody>
     </table>` : '<h3>🎨 גוונים לקירות</h3><p class="meta">לא נבחרו גוונים</p>';
 
@@ -590,11 +591,11 @@ function copyTable(kind, fmt){
   }else{
     const keptC=COLORS.filter(c=>(state[c.id]||0)>0);
     if(fmt==='tsv'){
-      out='שם\tקוד\tHEX\tמשפחה\n';
-      keptC.forEach(c=>out+=`${c.name}\t${c.code}\t#${c.hex.toUpperCase()}\t${c.group}\n`);
+      out='שם\tקוד\tHEX\tמשפחה\tקישור לצבע\n';
+      keptC.forEach(c=>out+=`${c.name}\t${c.code}\t#${c.hex.toUpperCase()}\t${c.group}\t${c.url}\n`);
     }else{
       out='🎨 גוונים (נירלט):\n';
-      keptC.forEach(c=>out+=`• ${c.name} — ${c.code} (#${c.hex.toUpperCase()})\n`);
+      keptC.forEach(c=>out+=`• ${c.name} — ${c.code} (#${c.hex.toUpperCase()})\n  ${c.url}\n`);
     }
   }
   navigator.clipboard.writeText(out).then(()=>toast(fmt==='tsv'?'הטבלה הועתקה — הדביקו באקסל/גוגל שיטס 📊':'הרשימה הועתקה 📋'));

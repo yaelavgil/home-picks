@@ -330,252 +330,288 @@ const COLORS = [
   "name": "White Kitten",
   "code": "IS 0022",
   "hex": "dfdedb",
-  "group": "נייטרלים"
+  "group": "נייטרלים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0022"
  },
  {
   "id": "C2",
   "name": "Mission Hills",
   "code": "IS 0363",
   "hex": "e1dbc6",
-  "group": "נייטרלים"
+  "group": "נייטרלים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0363"
  },
  {
   "id": "C3",
   "name": "Flan",
   "code": "IS 0237",
   "hex": "e1caad",
-  "group": "נייטרלים"
+  "group": "נייטרלים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0237"
  },
  {
   "id": "C4",
   "name": "Phelps Putty",
   "code": "NTC 109",
   "hex": "c0bbab",
-  "group": "נייטרלים"
+  "group": "נייטרלים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/NTC109"
  },
  {
   "id": "C5",
   "name": "Beacon Fog",
   "code": "IS 0490",
   "hex": "a1adae",
-  "group": "נייטרלים"
+  "group": "נייטרלים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0490"
  },
  {
   "id": "C6",
   "name": "Lickety Split",
   "code": "IS 0699",
   "hex": "c7dbd2",
-  "group": "ירוקים"
+  "group": "ירוקים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0699"
  },
  {
   "id": "C7",
   "name": "Resting Place",
   "code": "IS 0462",
   "hex": "c1cbc1",
-  "group": "ירוקים"
+  "group": "ירוקים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0462"
  },
  {
   "id": "C8",
   "name": "Uninhibited",
   "code": "IS 0700",
   "hex": "bad2c9",
-  "group": "ירוקים"
+  "group": "ירוקים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0700"
  },
  {
   "id": "C9",
   "name": "Fair Maiden",
   "code": "IS 0456",
   "hex": "acb8aa",
-  "group": "ירוקים"
+  "group": "ירוקים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0456"
  },
  {
   "id": "C10",
   "name": "Plunge",
   "code": "IS 0701",
   "hex": "aac5bb",
-  "group": "ירוקים"
+  "group": "ירוקים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0701"
  },
  {
   "id": "C11",
   "name": "Peg's Promise",
   "code": "IS 0702",
   "hex": "93b1a6",
-  "group": "ירוקים"
+  "group": "ירוקים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0702"
  },
  {
   "id": "C12",
   "name": "Melville",
   "code": "NTC 074",
   "hex": "90a79c",
-  "group": "ירוקים"
+  "group": "ירוקים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/NTC074"
  },
  {
   "id": "C13",
   "name": "Malarca",
   "code": "IS 0458",
   "hex": "778575",
-  "group": "ירוקים"
+  "group": "ירוקים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0458"
  },
  {
   "id": "C14",
   "name": "Drifting Tide",
   "code": "IS 0670",
   "hex": "e0efec",
-  "group": "ירוק-כחול"
+  "group": "ירוק-כחול",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0670"
  },
  {
   "id": "C15",
   "name": "Dream Catcher",
   "code": "IS 0481",
   "hex": "dce5de",
-  "group": "ירוק-כחול"
+  "group": "ירוק-כחול",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0481"
  },
  {
   "id": "C16",
   "name": "Zircon Ice",
   "code": "IS 0664",
   "hex": "d0e3e5",
-  "group": "ירוק-כחול"
+  "group": "ירוק-כחול",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0664"
  },
  {
   "id": "C17",
   "name": "Cape Hope",
   "code": "IS 0496",
   "hex": "c2d3d3",
-  "group": "ירוק-כחול"
+  "group": "ירוק-כחול",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0496"
  },
  {
   "id": "C18",
   "name": "Monet Magic",
   "code": "IS 0665",
   "hex": "bedade",
-  "group": "ירוק-כחול"
+  "group": "ירוק-כחול",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0665"
  },
  {
   "id": "C19",
   "name": "Dreaming of the Day",
   "code": "IS 0470",
   "hex": "b1c6c1",
-  "group": "ירוק-כחול"
+  "group": "ירוק-כחול",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0470"
  },
  {
   "id": "C20",
   "name": "Restful Retreat",
   "code": "IS 0497",
   "hex": "b5c8ca",
-  "group": "ירוק-כחול"
+  "group": "ירוק-כחול",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0497"
  },
  {
   "id": "C21",
   "name": "Stormy Bay",
   "code": "IS 0484",
   "hex": "9fb3b2",
-  "group": "ירוק-כחול"
+  "group": "ירוק-כחול",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0484"
  },
  {
   "id": "C22",
   "name": "Trisha's Eyes",
   "code": "IS 0666",
   "hex": "93bac5",
-  "group": "ירוק-כחול"
+  "group": "ירוק-כחול",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0666"
  },
  {
   "id": "C23",
   "name": "Brush Blue",
   "code": "IS 0607",
   "hex": "d6e2ed",
-  "group": "כחולים"
+  "group": "כחולים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0607"
  },
  {
   "id": "C24",
   "name": "Sea Foam Mist",
   "code": "IS 0642",
   "hex": "cddde2",
-  "group": "כחולים"
+  "group": "כחולים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0642"
  },
  {
   "id": "C25",
   "name": "Empress Lila",
   "code": "IS 0636",
   "hex": "c7deed",
-  "group": "כחולים"
+  "group": "כחולים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0636"
  },
  {
   "id": "C26",
   "name": "Simple Serenity",
   "code": "IS 0614",
   "hex": "cadae6",
-  "group": "כחולים"
+  "group": "כחולים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0614"
  },
  {
   "id": "C27",
   "name": "Bridgewater Bay",
   "code": "IS 0650",
   "hex": "c1d9e3",
-  "group": "כחולים"
+  "group": "כחולים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0650"
  },
  {
   "id": "C28",
   "name": "Abstract Idea",
   "code": "IS 0643",
   "hex": "bdd2de",
-  "group": "כחולים"
+  "group": "כחולים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0643"
  },
  {
   "id": "C29",
   "name": "Blue Bayou",
   "code": "IS 0615",
   "hex": "b8cde0",
-  "group": "כחולים"
+  "group": "כחולים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0615"
  },
  {
   "id": "C30",
   "name": "Dream Whisper",
   "code": "NRC 085",
   "hex": "b8cbd4",
-  "group": "כחולים"
+  "group": "כחולים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/NRC085"
  },
  {
   "id": "C31",
   "name": "Pompeii Ruins",
   "code": "IS 0623",
   "hex": "b8c8d4",
-  "group": "כחולים"
+  "group": "כחולים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0623"
  },
  {
   "id": "C32",
   "name": "Dancing in the Rain",
   "code": "IS 0644",
   "hex": "afc7d7",
-  "group": "כחולים"
+  "group": "כחולים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0644"
  },
  {
   "id": "C33",
   "name": "Bluette",
   "code": "IS 0616",
   "hex": "a4bfd8",
-  "group": "כחולים"
+  "group": "כחולים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0616"
  },
  {
   "id": "C34",
   "name": "In The Blue",
   "code": "IS 0504",
   "hex": "a1b3be",
-  "group": "כחולים"
+  "group": "כחולים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0504"
  },
  {
   "id": "C35",
   "name": "Cape Cod Bay",
   "code": "IS 0633",
   "hex": "5e7585",
-  "group": "כחולים"
+  "group": "כחולים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0633"
  },
  {
   "id": "C36",
   "name": "Peninsula",
   "code": "IS 0654",
   "hex": "4a80a1",
-  "group": "כחולים"
+  "group": "כחולים",
+  "url": "https://nirlat.com/fan/#/category/wall/family//color-fan/hue/IS_0654"
  }
 ];
 const HANDLES = [
