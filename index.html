@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>הבית שלנו - תאורה וגוונים</title>
+<script src="data.js"></script>
+<style>
+  :root{
+    --ink:#2b2b2b; --muted:#8a8a8a; --line:#e8e4de; --bg:#faf8f5; --card:#ffffff;
+    --accent:#b08d57; --accent2:#4a80a1; --danger:#c0564f; --ok:#4f7d5d;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI",Arial,"Noto Sans Hebrew",sans-serif;background:var(--bg);color:var(--ink)}
+  header{position:sticky;top:0;z-index:20;background:rgba(250,248,245,.95);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 16px}
+  .head-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;max-width:1200px;margin:0 auto}
+  h1{font-size:20px;margin:0;font-weight:700}
+  .totals{display:flex;gap:14px;align-items:baseline;margin-inline-start:auto;font-size:14px}
+  .totals b{font-size:20px;color:var(--accent)}
+  .btns{display:flex;gap:8px;flex-wrap:wrap}
+  button{font-family:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 12px;font-size:13px}
+  button:hover{border-color:var(--accent)}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.ghost{color:var(--muted)}
+  main{max-width:1200px;margin:0 auto;padding:16px}
+  .section-title{display:flex;align-items:baseline;gap:10px;margin:26px 0 6px;border-bottom:2px solid var(--line);padding-bottom:8px}
+  .section-title h2{margin:0;font-size:22px}
+  .section-title span{color:var(--muted);font-size:14px}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+  .chip{border-radius:999px;padding:6px 14px;font-size:13px}
+  .chip.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+  select{font-family:inherit;border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:13px;background:var(--card)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;position:relative;transition:opacity .2s}
+  .card.removed{opacity:.38}
+  .card img{width:100%;aspect-ratio:1;object-fit:contain;background:#fff;border-radius:10px}
+  .swatch{width:100%;aspect-ratio:1.6;border-radius:10px;border:1px solid rgba(0,0,0,.08)}
+  .name{font-size:14px;font-weight:600;margin:8px 0 2px;min-height:2.4em;line-height:1.2}
+  .colcard .name{min-height:auto}
+  .meta{font-size:12px;color:var(--muted)}
+  .price{font-size:16px;font-weight:700;margin-top:4px}
+  .note{font-size:11px;color:var(--ok)}
+  .badge{position:absolute;top:10px;inset-inline-start:10px;background:rgba(255,255,255,.9);border:1px solid var(--line);font-size:11px;border-radius:999px;padding:2px 9px;color:var(--muted)}
+  .x{position:absolute;top:8px;inset-inline-end:8px;border:none;background:rgba(255,255,255,.9);width:28px;height:28px;border-radius:50%;font-size:14px;line-height:1;color:var(--muted)}
+  .x:hover{color:var(--danger)}
+  .row{display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:6px}
+  .qty{display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .qty button{border:none;border-radius:0;width:30px;height:30px;padding:0;font-size:16px}
+  .qty span{min-width:26px;text-align:center;font-size:14px;font-weight:600}
+  a.plink{font-size:12px;color:var(--accent2);text-decoration:none}
+  a.plink:hover{text-decoration:underline}
+  .restore{width:100%;margin-top:8px;color:var(--ok)}
+  .colcard{cursor:pointer}
+  .colcard .check{position:absolute;top:8px;inset-inline-end:8px;width:24px;height:24px;border-radius:50%;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px}
+  .colcard.removed .check{background:#bbb}
+  #toast{position:fixed;bottom:24px;right:50%;transform:translateX(50%);background:var(--ink);color:#fff;padding:10px 20px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:50}
+  #toast.show{opacity:1}
+  footer{max-width:1200px;margin:10px auto 40px;padding:0 16px;color:var(--muted);font-size:12px}
+  @media (max-width:640px){ .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))} h1{font-size:17px} .totals{gap:8px;font-size:12px} .totals b{font-size:16px} }
+</style>
+</head>
+<body>
+<header>
+  <div class="head-row">
+    <h1>🏠 הבית שלנו — תאורה וגוונים</h1>
+    <div class="totals">
+      <span><b id="t-items">0</b> פריטים</span>
+      <span>סה"כ <b id="t-sum">₪0</b></span>
+    </div>
+    <div class="btns">
+      <button class="primary" onclick="copyLink()">🔗 העתקת קישור עם הבחירות שלי</button>
+      <button onclick="copySummary()">📋 העתקת סיכום</button>
+      <button class="ghost" onclick="resetAll()">איפוס</button>
+    </div>
+  </div>
+</header>
+<main>
+  <div class="section-title"><h2>גופי תאורה</h2><span>הבית של עידה · אפשר לשנות כמות או להסיר, הסכום מתעדכן</span></div>
+  <div class="toolbar" id="lamp-filters"></div>
+  <div class="grid" id="lamp-grid"></div>
+
+  <div class="section-title"><h2>גוונים לקירות</h2><span>נירלט Color Is · לחיצה על גוון מסמנת/מבטלת</span></div>
+  <div class="toolbar" id="color-filters"></div>
+  <div class="grid" id="color-grid"></div>
+</main>
+<footer>
+  נבנה מתוך רשימת המשאלות ב"הבית של עידה" ומניפת הגוונים של נירלט · הגוונים על המסך הם קירוב — לבדיקה סופית מומלץ מניפה פיזית.
+</footer>
+<div id="toast"></div>
+<script>
+const LGROUPS = ['הכל','קיר','תלוי','ספוט'];
+const CGROUPS = ['הכל','נייטרלים','ירוקים','ירוק-כחול','כחולים'];
+let state = {};           // id -> qty (lamps) / 0|1 (colors)
+let lampFilter = 'הכל', colorFilter = 'הכל', lampSort = 'orig';
+
+function defaults(){ const s={}; LAMPS.forEach(l=>s[l.id]=1); COLORS.forEach(c=>s[c.id]=1); return s; }
+
+function loadState(){
+  const m = location.hash.match(/#s=([A-Za-z0-9\-_]+)/);
+  if(m){ try{ state = {...defaults(), ...JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/'))))) }; save(); return; }catch(e){} }
+  try{ const ls = localStorage.getItem('home-picks'); if(ls){ state = {...defaults(), ...JSON.parse(ls)}; return; } }catch(e){}
+  state = defaults();
+}
+function save(){ try{ localStorage.setItem('home-picks', JSON.stringify(state)); }catch(e){} }
+
+function encState(){
+  const diff = {};
+  const d = defaults();
+  for(const k in state) if(state[k] !== d[k]) diff[k] = state[k];
+  return btoa(unescape(encodeURIComponent(JSON.stringify(diff)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+
+function totals(){
+  let items=0, sum=0;
+  LAMPS.forEach(l=>{ const q = state[l.id]||0; if(q>0){ items++; sum += q*l.price; } });
+  document.getElementById('t-items').textContent = items;
+  document.getElementById('t-sum').textContent = '₪' + sum.toLocaleString();
+}
+
+function chipBar(el, groups, current, cb){
+  el.innerHTML='';
+  groups.forEach(g=>{
+    const b=document.createElement('button');
+    b.className='chip'+(g===current?' active':''); b.textContent=g;
+    b.onclick=()=>cb(g); el.appendChild(b);
+  });
+  if(el.id==='lamp-filters'){
+    const s=document.createElement('select');
+    s.innerHTML='<option value="orig">סדר מקורי</option><option value="asc">מחיר: מהזול ליקר</option><option value="desc">מחיר: מהיקר לזול</option>';
+    s.value=lampSort; s.onchange=()=>{lampSort=s.value; render();};
+    el.appendChild(s);
+  }
+}
+
+function render(){
+  chipBar(document.getElementById('lamp-filters'), LGROUPS, lampFilter, g=>{lampFilter=g; render();});
+  chipBar(document.getElementById('color-filters'), CGROUPS, colorFilter, g=>{colorFilter=g; render();});
+
+  let lamps = LAMPS.filter(l=>lampFilter==='הכל'||l.group===lampFilter);
+  if(lampSort==='asc') lamps=[...lamps].sort((a,b)=>a.price-b.price);
+  if(lampSort==='desc') lamps=[...lamps].sort((a,b)=>b.price-a.price);
+
+  const lg = document.getElementById('lamp-grid'); lg.innerHTML='';
+  lamps.forEach(l=>{
+    const q = state[l.id]||0;
+    const c = document.createElement('div');
+    c.className='card'+(q===0?' removed':'');
+    c.innerHTML = `
+      <span class="badge">${l.group}</span>
+      ${q>0?`<button class="x" title="הסרה" onclick="setQty('${l.id}',0)">✕</button>`:''}
+      <img src="${l.img}" alt="${l.name}" loading="lazy">
+      <div class="name">${l.name}</div>
+      <div class="price">₪ ${l.price.toLocaleString()} ${l.note?`<div class="note">${l.note}</div>`:''}</div>
+      ${q>0?`
+      <div class="row">
+        <div class="qty">
+          <button onclick="setQty('${l.id}',${q+1})">+</button><span>${q}</span><button onclick="setQty('${l.id}',${q-1})">−</button>
+        </div>
+        <a class="plink" href="${l.url}" target="_blank" rel="noopener">לצפייה בחנות ↗</a>
+      </div>`:`
+      <button class="restore" onclick="setQty('${l.id}',1)">↩ החזרה לרשימה</button>`}
+    `;
+    lg.appendChild(c);
+  });
+
+  const cg = document.getElementById('color-grid'); cg.innerHTML='';
+  COLORS.filter(c=>colorFilter==='הכל'||c.group===colorFilter).forEach(col=>{
+    const on = (state[col.id]||0)>0;
+    const c = document.createElement('div');
+    c.className='card colcard'+(on?'':' removed');
+    c.onclick=()=>{ state[col.id]=on?0:1; save(); render(); };
+    c.innerHTML = `
+      <div class="check">${on?'✓':'–'}</div>
+      <div class="swatch" style="background:#${col.hex}"></div>
+      <div class="name">${col.name}</div>
+      <div class="meta">${col.code} · #${col.hex.toUpperCase()} · ${col.group}</div>
+    `;
+    cg.appendChild(c);
+  });
+
+  totals();
+}
+
+function setQty(id, q){ state[id]=Math.max(0,Math.min(99,q)); save(); render(); }
+function resetAll(){ if(confirm('לאפס את כל הבחירות?')){ state=defaults(); save(); history.replaceState(null,'',location.pathname); render(); } }
+
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+
+function copyLink(){
+  const url = location.origin + location.pathname + '#s=' + encState();
+  navigator.clipboard.writeText(url).then(()=>toast('הקישור הועתק — שלחו אותו בוואטסאפ 🎉'));
+}
+
+function copySummary(){
+  let lines = ['🏠 הבית שלנו — בחירת תאורה וגוונים',''];
+  let sum=0;
+  const kept = LAMPS.filter(l=>(state[l.id]||0)>0);
+  if(kept.length){
+    lines.push('💡 גופי תאורה:');
+    kept.forEach(l=>{ const q=state[l.id]; sum+=q*l.price; lines.push(`• ${l.name}${q>1?' × '+q:''} — ₪${(q*l.price).toLocaleString()}`); });
+    lines.push(`סה"כ: ₪${sum.toLocaleString()}`,'');
+  }
+  const keptC = COLORS.filter(c=>(state[c.id]||0)>0);
+  if(keptC.length){
+    lines.push('🎨 גוונים (נירלט):');
+    keptC.forEach(c=>lines.push(`• ${c.name} — ${c.code}`));
+  }
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>toast('הסיכום הועתק 📋'));
+}
+
+loadState(); render();
+</script>
+</body>
+</html>
