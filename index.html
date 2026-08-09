@@ -193,7 +193,7 @@
   </section>
 
   <section class="view" id="view-handles">
-    <div class="section-title"><h2>ידיות למטבח</h2><span>דומיסיל · המחירים יתעדכנו (מוצגים רק בחשבון שלך בחנות)</span></div>
+    <div class="section-title"><h2>ידיות למטבח</h2><span>דומיסיל · הידיות כלולות במחיר המטבח</span></div>
     <div class="toolbar" id="handle-filters"></div>
     <div class="grid" id="handle-grid"></div>
   </section>
@@ -399,7 +399,7 @@ function renderHandleGrid(){
       ${q>0?`<button class="x" title="הסרה" onclick="removeAnim('${h.id}',this)">✕</button>`:''}
       <div class="imgwrap" onclick="openLB('${h.id}')"><img class="ph" src="${h.img}" alt="${h.name}" loading="lazy"></div>
       <div class="name">${h.name}</div>
-      <div class="price">${h.price?('₪ '+h.price.toLocaleString()):'<span class="meta">המחיר יתעדכן</span>'}</div>
+      <div class="price">${h.price?('₪ '+h.price.toLocaleString()):'<span class="note">כלול במחיר המטבח</span>'}</div>
       ${q>0?`
       <div class="row">
         <div class="qty">
@@ -466,7 +466,7 @@ function fillLB(){
     <div class="info">
       <h3>${l.name}</h3>
       <div class="meta">${l.group||('דגם '+l.model)} · ${lbIdx+1}/${lbList.length}</div>
-      <div class="price">${l.price?('₪ '+l.price.toLocaleString()):'המחיר יתעדכן'}</div>
+      <div class="price">${l.price?('₪ '+l.price.toLocaleString()):'<span class="note">כלול במחיר המטבח</span>'}</div>
       ${l.note?`<div class="note">${l.note}</div>`:''}
       <div class="row" style="margin-top:16px">
         ${q>0?`
@@ -535,7 +535,7 @@ function renderSum(){
   let hsum=0, hasHPrices=keptH.some(h=>h.price);
   const handleRows=keptH.map((h,i)=>{
     const q=state[h.id], t=q*(h.price||0); hsum+=t;
-    return `<tr><td>${i+1}</td><td><img src="${h.img}" loading="lazy"></td><td>${h.name}</td><td>${h.model}</td><td>${q}</td><td>${h.price?('₪'+h.price.toLocaleString()):'—'}</td><td>${h.price?('₪'+t.toLocaleString()):'—'}</td>
+    return `<tr><td>${i+1}</td><td><img src="${h.img}" loading="lazy"></td><td>${h.name}</td><td>${h.model}</td><td>${q}</td><td colspan="2">${h.price?('₪'+h.price.toLocaleString()):'כלול במחיר המטבח'}</td>
       <td><a href="${h.url}" target="_blank" rel="noopener">למוצר ↗</a></td><td><a href="${absUrl(h.img)}" target="_blank" rel="noopener">לתמונה ↗</a></td></tr>`;
   }).join('');
   const handlesTable = keptH.length ? `
@@ -582,11 +582,11 @@ function copyTable(kind, fmt){
     const keptH=HANDLES.filter(h=>(state[h.id]||0)>0); let hsum=0;
     if(fmt==='tsv'){
       out='שם\tדגם\tכמות\tמחיר\tסה"כ\tקישור למוצר\tקישור לתמונה\n';
-      keptH.forEach(h=>{ const q=state[h.id], t=q*(h.price||0); hsum+=t; out+=`${h.name}\t${h.model}\t${q}\t${h.price||''}\t${h.price?t:''}\t${h.url}\t${absUrl(h.img)}\n`; });
+      keptH.forEach(h=>{ const q=state[h.id], t=q*(h.price||0); hsum+=t; out+=`${h.name}\t${h.model}\t${q}\t${h.price||'כלול במחיר המטבח'}\t${h.price?t:''}\t${h.url}\t${absUrl(h.img)}\n`; });
       if(hsum) out+=`סה"כ\t\t\t\t${hsum}\t\t\n`;
     }else{
       out='🗄️ ידיות למטבח:\n';
-      keptH.forEach(h=>{ const q=state[h.id]; out+=`• ${h.name} (דגם ${h.model})${q>1?' × '+q:''}${h.price?' — ₪'+(q*h.price).toLocaleString():''}\n  מוצר: ${h.url}\n  תמונה: ${absUrl(h.img)}\n`; });
+      keptH.forEach(h=>{ const q=state[h.id]; out+=`• ${h.name} (דגם ${h.model})${q>1?' × '+q:''}${h.price?' — ₪'+(q*h.price).toLocaleString():' — כלול במחיר המטבח'}\n  מוצר: ${h.url}\n  תמונה: ${absUrl(h.img)}\n`; });
     }
   }else{
     const keptC=COLORS.filter(c=>(state[c.id]||0)>0);
