@@ -4,174 +4,365 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>הבית שלנו - תאורה וגוונים</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="data.js"></script>
 <style>
   :root{
-    --ink:#2b2b2b; --muted:#8a8a8a; --line:#e8e4de; --bg:#faf8f5; --card:#ffffff;
-    --accent:#b08d57; --accent2:#4a80a1; --danger:#c0564f; --ok:#4f7d5d;
+    --ink:#292524; --muted:#8d8578; --line:#e9e2d8; --bg:#faf7f2; --card:#ffffff;
+    --accent:#b08d57; --accent-soft:#f3ead9; --accent2:#4a80a1; --danger:#c0564f; --ok:#5b8a6b;
+    --shadow:0 1px 2px rgba(60,50,30,.06); --shadow-hover:0 10px 28px -8px rgba(60,50,30,.22);
+    --r:16px; --ease:cubic-bezier(.22,.9,.35,1.1);
   }
   *{box-sizing:border-box}
-  body{margin:0;font-family:-apple-system,"Segoe UI",Arial,"Noto Sans Hebrew",sans-serif;background:var(--bg);color:var(--ink)}
-  header{position:sticky;top:0;z-index:20;background:rgba(250,248,245,.95);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 16px}
-  .head-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;max-width:1200px;margin:0 auto}
-  h1{font-size:20px;margin:0;font-weight:700}
-  .totals{display:flex;gap:14px;align-items:baseline;margin-inline-start:auto;font-size:14px}
-  .totals b{font-size:20px;color:var(--accent)}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:Assistant,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+
+  /* ---------- header ---------- */
+  header{position:sticky;top:0;z-index:30;background:rgba(250,247,242,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .head-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;max-width:1240px;margin:0 auto;padding:10px 18px}
+  h1{font-size:19px;margin:0;font-weight:800;letter-spacing:-.2px}
+  .totals{display:flex;gap:16px;align-items:baseline;margin-inline-start:auto}
+  .totals .tt{font-size:12px;color:var(--muted);display:block;text-align:center}
+  .totals b{font-size:21px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;transition:transform .15s}
+  .totals b.bump{transform:scale(1.18)}
   .btns{display:flex;gap:8px;flex-wrap:wrap}
-  button{font-family:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 12px;font-size:13px}
-  button:hover{border-color:var(--accent)}
+  button{font-family:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink);transition:all .2s var(--ease)}
+  button:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:var(--shadow-hover)}
+  button:active{transform:translateY(0) scale(.97)}
   button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   button.ghost{color:var(--muted)}
-  main{max-width:1200px;margin:0 auto;padding:16px}
-  .section-title{display:flex;align-items:baseline;gap:10px;margin:26px 0 6px;border-bottom:2px solid var(--line);padding-bottom:8px}
-  .section-title h2{margin:0;font-size:22px}
+  .nav-tabs{display:flex;gap:4px;margin-inline-start:6px;background:var(--accent-soft);border-radius:999px;padding:4px}
+  .nav-tabs button{font-size:13px;font-weight:700;color:var(--muted);border:none;background:transparent;box-shadow:none;padding:7px 16px;border-radius:999px;display:flex;gap:7px;align-items:center}
+  .nav-tabs button:hover{transform:none;box-shadow:none;color:var(--ink)}
+  .nav-tabs button.active{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+  .nav-tabs button small{background:var(--accent);color:#fff;border-radius:999px;padding:1px 7px;font-size:10.5px;font-weight:800}
+  .view{display:none}
+  .view.on{display:block;animation:viewin .35s var(--ease)}
+  @keyframes viewin{from{opacity:0;transform:translateY(10px)}}
+
+  main{max-width:1240px;margin:0 auto;padding:18px}
+  .section-title{display:flex;align-items:baseline;gap:12px;margin:30px 0 4px;scroll-margin-top:90px}
+  .section-title h2{margin:0;font-size:26px;font-weight:800}
   .section-title span{color:var(--muted);font-size:14px}
-  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
-  .chip{border-radius:999px;padding:6px 14px;font-size:13px}
+
+  /* ---------- toolbar ---------- */
+  .toolbar{position:sticky;top:58px;z-index:20;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px -6px;padding:8px 6px;background:linear-gradient(var(--bg) 75%,transparent)}
+  .chip{border-radius:999px;padding:7px 15px;font-size:13px;display:flex;gap:7px;align-items:center}
+  .chip small{background:rgba(0,0,0,.07);border-radius:999px;padding:1px 7px;font-size:11px;font-weight:700;transition:background .2s}
   .chip.active{background:var(--ink);color:#fff;border-color:var(--ink)}
-  select{font-family:inherit;border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:13px;background:var(--card)}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;position:relative;transition:opacity .2s}
-  .card.removed img,.card.removed .swatch,.card.removed .name,.card.removed .price,.card.removed .meta,.card.removed .badge{opacity:.35}
-  .card.removed{border-style:dashed}
-  .card img{width:100%;aspect-ratio:1;object-fit:contain;background:#fff;border-radius:10px}
-  .swatch{width:100%;aspect-ratio:1.6;border-radius:10px;border:1px solid rgba(0,0,0,.08)}
-  .name{font-size:14px;font-weight:600;margin:8px 0 2px;min-height:2.4em;line-height:1.2}
-  .colcard .name{min-height:auto}
+  .chip.active small{background:rgba(255,255,255,.22)}
+  .seg{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-inline-start:auto;background:var(--card)}
+  .seg button{border:none;border-radius:0;box-shadow:none;padding:8px 13px;font-size:12.5px;color:var(--muted)}
+  .seg button:hover{transform:none;box-shadow:none;color:var(--ink)}
+  .seg button.active{background:var(--accent-soft);color:var(--ink);font-weight:700}
+
+  /* ---------- grid & cards ---------- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;position:relative;box-shadow:var(--shadow);transition:transform .25s var(--ease),box-shadow .25s,opacity .25s,border-color .25s;animation:pop .4s var(--ease) backwards}
+  @keyframes pop{from{opacity:0;transform:translateY(14px) scale(.97)}}
+  .card:hover{transform:translateY(-4px);box-shadow:var(--shadow-hover)}
+  .card.bye{transform:scale(.8);opacity:0}
+  .imgwrap{position:relative;border-radius:12px;overflow:hidden;background:#fff;cursor:zoom-in}
+  .card img.ph{width:100%;aspect-ratio:1;object-fit:contain;display:block;transition:transform .45s var(--ease)}
+  .imgwrap:hover img.ph{transform:scale(1.07)}
+  .imgwrap::after{content:"⤢";position:absolute;bottom:8px;inset-inline-start:8px;background:rgba(255,255,255,.85);border-radius:8px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted);opacity:0;transition:opacity .2s}
+  .imgwrap:hover::after{opacity:1}
+  .name{font-size:15px;font-weight:700;margin:10px 0 2px;min-height:2.3em;line-height:1.18}
   .meta{font-size:12px;color:var(--muted)}
-  .price{font-size:16px;font-weight:700;margin-top:4px}
-  .note{font-size:11px;color:var(--ok)}
-  .badge{position:absolute;top:10px;inset-inline-start:10px;background:rgba(255,255,255,.9);border:1px solid var(--line);font-size:11px;border-radius:999px;padding:2px 9px;color:var(--muted)}
-  .x{position:absolute;top:8px;inset-inline-end:8px;border:none;background:rgba(255,255,255,.9);width:28px;height:28px;border-radius:50%;font-size:14px;line-height:1;color:var(--muted)}
-  .x:hover{color:var(--danger)}
-  .row{display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:6px}
-  .qty{display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
-  .qty button{border:none;border-radius:0;width:30px;height:30px;padding:0;font-size:16px}
-  .qty span{min-width:26px;text-align:center;font-size:14px;font-weight:600}
-  a.plink{font-size:12px;color:var(--accent2);text-decoration:none}
+  .price{font-size:17px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums}
+  .note{font-size:11.5px;color:var(--ok);font-weight:600}
+  .badge{position:absolute;top:12px;inset-inline-start:12px;z-index:2;background:rgba(255,255,255,.92);border:1px solid var(--line);font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;color:var(--muted)}
+  .x{position:absolute;top:10px;inset-inline-end:10px;z-index:2;border:none;background:rgba(255,255,255,.92);width:30px;height:30px;border-radius:50%;font-size:14px;line-height:1;color:var(--muted);padding:0;display:flex;align-items:center;justify-content:center}
+  .x:hover{color:#fff;background:var(--danger);transform:scale(1.1) rotate(90deg)}
+  .row{display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:6px}
+  .qty{display:flex;align-items:center;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .qty button{border:none;border-radius:0;width:34px;height:34px;padding:0;font-size:18px;box-shadow:none}
+  .qty button:hover{transform:none;background:var(--accent-soft)}
+  .qty span{min-width:30px;text-align:center;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+  a.plink{font-size:12.5px;font-weight:600;color:var(--accent2);text-decoration:none;transition:gap .2s}
   a.plink:hover{text-decoration:underline}
-  .restore{width:100%;margin-top:8px;background:var(--ok);border-color:var(--ok);color:#fff;font-weight:700;font-size:14px;padding:10px}
-  .restore:hover{filter:brightness(1.1);border-color:var(--ok)}
-  .colcard{cursor:pointer}
-  .colcard .check{position:absolute;top:8px;inset-inline-end:8px;width:24px;height:24px;border-radius:50%;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px}
-  .colcard.removed .check{background:#bbb}
-  #toast{position:fixed;bottom:24px;right:50%;transform:translateX(50%);background:var(--ink);color:#fff;padding:10px 20px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:50}
-  #toast.show{opacity:1}
-  footer{max-width:1200px;margin:10px auto 40px;padding:0 16px;color:var(--muted);font-size:12px}
-  @media (max-width:640px){ .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))} h1{font-size:17px} .totals{gap:8px;font-size:12px} .totals b{font-size:16px} }
+  .card.removed img.ph,.card.removed .swatch,.card.removed .name,.card.removed .price,.card.removed .meta,.card.removed .badge{opacity:.3;filter:grayscale(.6)}
+  .card.removed{border-style:dashed;box-shadow:none}
+  .card.removed:hover{transform:none}
+  .restore{width:100%;margin-top:10px;background:var(--ok);border-color:var(--ok);color:#fff;font-weight:700;font-size:14px;padding:11px}
+  .restore:hover{filter:brightness(1.08);border-color:var(--ok)}
+
+  /* ---------- colors ---------- */
+  .colcard{cursor:pointer;user-select:none}
+  .swatch{width:100%;aspect-ratio:1.5;border-radius:12px;border:1px solid rgba(0,0,0,.07);transition:transform .3s var(--ease)}
+  .colcard:hover .swatch{transform:scale(1.03)}
+  .colcard .name{min-height:auto;margin-top:10px}
+  .check{position:absolute;top:10px;inset-inline-end:10px;width:26px;height:26px;border-radius:50%;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;transition:all .25s var(--ease)}
+  .colcard.removed .check{background:#c6c0b6;transform:scale(.85)}
+  .colcard:not(.removed) .check{animation:checkpop .3s var(--ease)}
+  @keyframes checkpop{50%{transform:scale(1.35)}}
+
+  /* ---------- lightbox ---------- */
+  #lb{position:fixed;inset:0;z-index:60;background:rgba(30,25,18,.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+  #lb.open{opacity:1;pointer-events:auto}
+  #lb .box{background:var(--card);border-radius:20px;max-width:min(920px,94vw);max-height:92vh;overflow:auto;padding:22px;display:flex;gap:24px;align-items:center;transform:scale(.93);transition:transform .25s var(--ease)}
+  #lb.open .box{transform:scale(1)}
+  #lb img{max-width:min(480px,55vw);max-height:65vh;object-fit:contain;border-radius:12px}
+  #lb .info{min-width:220px}
+  #lb h3{margin:0 0 6px;font-size:22px;font-weight:800}
+  #lb .price{font-size:22px}
+  #lb .lb-x{position:absolute;top:18px;inset-inline-end:18px;background:rgba(255,255,255,.15);color:#fff;border:none;width:40px;height:40px;border-radius:50%;font-size:18px}
+  #lb .arrow{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);color:#fff;border:none;width:44px;height:44px;border-radius:50%;font-size:20px}
+  #lb .arrow:hover,#lb .lb-x:hover{background:rgba(255,255,255,.35)}
+  #lb .arrow.next{inset-inline-start:14px}
+  #lb .arrow.prev{inset-inline-end:14px}
+
+  /* ---------- summary modal ---------- */
+  #sum{position:fixed;inset:0;z-index:65;background:rgba(30,25,18,.72);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+  #sum.open{opacity:1;pointer-events:auto}
+  #sum .box{background:var(--bg);border-radius:20px;width:min(980px,95vw);max-height:90vh;overflow:auto;padding:26px;transform:scale(.95);transition:transform .25s var(--ease)}
+  #sum.open .box{transform:scale(1)}
+  #sum h3{margin:22px 0 10px;font-size:20px;font-weight:800;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  #sum h3:first-child{margin-top:0}
+  #sum h3 .tools{display:flex;gap:6px;margin-inline-start:auto}
+  #sum h3 .tools button{font-size:12px;padding:6px 10px}
+  .sumtable{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);font-size:13.5px}
+  .sumtable th{background:var(--accent-soft);text-align:right;padding:10px 12px;font-size:12.5px;color:#7a6a4f}
+  .sumtable td{padding:9px 12px;border-top:1px solid var(--line);vertical-align:middle}
+  .sumtable tr:hover td{background:#fdfbf7}
+  .sumtable img{width:44px;height:44px;object-fit:contain;border-radius:8px;background:#fff;border:1px solid var(--line)}
+  .sumtable .sw{width:44px;height:28px;border-radius:6px;border:1px solid rgba(0,0,0,.08);display:inline-block}
+  .sumtable a{color:var(--accent2);font-weight:600;text-decoration:none;font-size:12.5px}
+  .sumtable a:hover{text-decoration:underline}
+  .sumtable tfoot td{font-weight:800;background:var(--accent-soft)}
+  .sum-x{position:sticky;top:0;float:left;background:var(--ink);color:#fff;border:none;width:34px;height:34px;border-radius:50%;font-size:15px;z-index:2}
+  /* ---------- add item ---------- */
+  #add{position:fixed;inset:0;z-index:66;background:rgba(30,25,18,.72);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+  #add.open{opacity:1;pointer-events:auto}
+  #add .box{background:var(--bg);border-radius:20px;width:min(460px,94vw);padding:26px;transform:scale(.95);transition:transform .25s var(--ease)}
+  #add.open .box{transform:scale(1)}
+  #add h3{margin:0 0 14px;font-size:20px;font-weight:800}
+  #add label{display:block;font-size:13px;font-weight:700;margin:12px 0 4px;color:var(--muted)}
+  #add input,#add select{width:100%;font-family:inherit;font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
+  #add input:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+  .noimg{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:44px;background:var(--accent-soft);border-radius:12px}
+  .del{width:100%;margin-top:6px;color:var(--danger);font-size:12.5px;border-style:dashed}
+  #toast{position:fixed;bottom:-70px;right:50%;transform:translateX(50%);background:var(--ink);color:#fff;padding:12px 24px;border-radius:999px;font-size:14px;font-weight:600;transition:bottom .35s var(--ease);z-index:70;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+  #toast.show{bottom:26px}
+  footer{max-width:1240px;margin:14px auto 46px;padding:0 18px;color:var(--muted);font-size:12px}
+  @media (max-width:640px){
+    .grid{grid-template-columns:repeat(2,1fr);gap:10px}
+    h1{font-size:15px} .totals{gap:10px} .totals b{font-size:17px}
+    .toolbar{top:96px} .seg{margin-inline-start:0}
+    .name{font-size:13px} .card{padding:10px}
+    #lb .box{flex-direction:column;gap:12px} #lb img{max-width:80vw}
+    .nav-tabs{order:5;width:100%;justify-content:center}
+    .sumtable{font-size:11.5px} .sumtable td,.sumtable th{padding:6px 7px}
+  }
 </style>
 </head>
 <body>
 <header>
   <div class="head-row">
-    <h1>🏠 הבית שלנו — תאורה וגוונים</h1>
+    <h1>🏠 הבית שלנו</h1>
+    <nav class="nav-tabs" id="nav-tabs"></nav>
     <div class="totals">
-      <span><b id="t-items">0</b> פריטים</span>
-      <span>סה"כ <b id="t-sum">₪0</b></span>
+      <span><b id="t-items">0</b><span class="tt">פריטים</span></span>
+      <span><b id="t-sum">₪0</b><span class="tt">סה"כ</span></span>
     </div>
     <div class="btns">
-      <button class="primary" onclick="copyLink()">🔗 העתקת קישור עם הבחירות שלי</button>
-      <button onclick="copySummary()">📋 העתקת סיכום</button>
+      <button class="primary" onclick="copyLink()">🔗 שיתוף הבחירות שלי</button>
+      <button onclick="openSum()">📋 סיכום</button>
       <button class="ghost" onclick="resetAll()">איפוס</button>
     </div>
   </div>
 </header>
 <main>
-  <div class="section-title"><h2>גופי תאורה</h2><span>הבית של עידה · אפשר לשנות כמות או להסיר, הסכום מתעדכן</span></div>
-  <div class="toolbar" id="lamp-filters"></div>
-  <div class="grid" id="lamp-grid"></div>
+  <section class="view" id="view-lamps">
+    <div class="section-title"><h2>גופי תאורה</h2><span>הבית של עידה · שינוי כמות או הסרה מעדכנים את הסכום · לחיצה על תמונה מגדילה</span></div>
+    <div class="toolbar" id="lamp-filters"></div>
+    <div class="grid" id="lamp-grid"></div>
+  </section>
 
-  <div class="section-title"><h2>גוונים לקירות</h2><span>נירלט Color Is · לחיצה על גוון מסמנת/מבטלת</span></div>
-  <div class="toolbar" id="color-filters"></div>
-  <div class="grid" id="color-grid"></div>
+  <section class="view" id="view-colors">
+    <div class="section-title"><h2>גוונים לקירות</h2><span>נירלט Color Is · לחיצה על גוון מסמנת או מבטלת</span></div>
+    <div class="toolbar" id="color-filters"></div>
+    <div class="grid" id="color-grid"></div>
+  </section>
 </main>
 <footer>
   נבנה מתוך רשימת המשאלות ב"הבית של עידה" ומניפת הגוונים של נירלט · הגוונים על המסך הם קירוב — לבדיקה סופית מומלץ מניפה פיזית.
 </footer>
+
+<div id="lb" onclick="if(event.target===this)closeLB()">
+  <button class="lb-x" onclick="closeLB()">✕</button>
+  <button class="arrow prev" onclick="stepLB(-1)">‹</button>
+  <button class="arrow next" onclick="stepLB(1)">›</button>
+  <div class="box" id="lb-box"></div>
+</div>
+<div id="add" onclick="if(event.target===this)closeAdd()">
+  <div class="box">
+    <h3>➕ הוספת פריט מהחנות</h3>
+    <label>קישור למוצר *</label>
+    <input id="a-url" type="url" placeholder="https://..." dir="ltr">
+    <label>שם המוצר *</label>
+    <input id="a-name" type="text" placeholder="למשל: ידית קשת פליז">
+    <label>מחיר (₪) *</label>
+    <input id="a-price" type="number" min="0" placeholder="199">
+    <label>קישור לתמונה (לא חובה)</label>
+    <input id="a-img" type="url" placeholder="https://..." dir="ltr">
+    <label>סוג</label>
+    <select id="a-group"><option>אחר</option><option>קיר</option><option>תלוי</option><option>ספוט</option></select>
+    <div style="display:flex;gap:8px;margin-top:18px">
+      <button class="primary" style="flex:1" onclick="submitAdd()">הוספה לרשימה</button>
+      <button onclick="closeAdd()">ביטול</button>
+    </div>
+  </div>
+</div>
+<div id="sum" onclick="if(event.target===this)closeSum()">
+  <div class="box">
+    <button class="sum-x" onclick="closeSum()">✕</button>
+    <div id="sum-content"></div>
+  </div>
+</div>
 <div id="toast"></div>
+
 <script>
-const LGROUPS = ['הכל','קיר','תלוי','ספוט'];
+const BASE_LGROUPS = ['הכל','קיר','תלוי','ספוט'];
 const CGROUPS = ['הכל','נייטרלים','ירוקים','ירוק-כחול','כחולים'];
-let state = {};           // id -> qty (lamps) / 0|1 (colors)
-let lampFilter = 'הכל', colorFilter = 'הכל', lampSort = 'orig';
+let state = {};
+let CUSTOM = [];
+let lampFilter='הכל', colorFilter='הכל', lampSort='orig';
+let lbList=[], lbIdx=0;
+let prevTotals={items:null,sum:null};
 
-function defaults(){ const s={}; LAMPS.forEach(l=>s[l.id]=1); COLORS.forEach(c=>s[c.id]=1); return s; }
-
+function allLamps(){ return LAMPS.concat(CUSTOM); }
+function LGROUPS(){ return CUSTOM.some(c=>c.group==='אחר') ? BASE_LGROUPS.concat('אחר') : BASE_LGROUPS; }
+function defaults(){ const s={}; allLamps().forEach(l=>s[l.id]=1); COLORS.forEach(c=>s[c.id]=1); return s; }
+function loadCustom(){ try{ CUSTOM = JSON.parse(localStorage.getItem('home-custom')||'[]'); }catch(e){ CUSTOM=[]; } }
+function saveCustom(){ try{ localStorage.setItem('home-custom', JSON.stringify(CUSTOM)); }catch(e){} }
 function loadState(){
+  loadCustom();
   const m = location.hash.match(/#s=([A-Za-z0-9\-_]+)/);
-  if(m){ try{ state = {...defaults(), ...JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/'))))) }; save(); return; }catch(e){} }
-  try{ const ls = localStorage.getItem('home-picks'); if(ls){ state = {...defaults(), ...JSON.parse(ls)}; return; } }catch(e){}
+  if(m){ try{
+    const obj = JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')))));
+    if(obj && obj.q){ CUSTOM = obj.c||[]; saveCustom(); state={...defaults(),...obj.q}; }
+    else state={...defaults(),...obj};
+    save(); return;
+  }catch(e){} }
+  try{ const ls=localStorage.getItem('home-picks'); if(ls){ state={...defaults(),...JSON.parse(ls)}; return; } }catch(e){}
   state = defaults();
 }
 function save(){ try{ localStorage.setItem('home-picks', JSON.stringify(state)); }catch(e){} }
-
 function encState(){
-  const diff = {};
-  const d = defaults();
-  for(const k in state) if(state[k] !== d[k]) diff[k] = state[k];
-  return btoa(unescape(encodeURIComponent(JSON.stringify(diff)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const diff={}, d=defaults();
+  for(const k in state) if(state[k]!==d[k]) diff[k]=state[k];
+  const payload = CUSTOM.length ? {q:diff, c:CUSTOM} : diff;
+  return btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
 
+function bump(el){ el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
 function totals(){
-  let items=0, sum=0;
-  LAMPS.forEach(l=>{ const q = state[l.id]||0; if(q>0){ items++; sum += q*l.price; } });
-  document.getElementById('t-items').textContent = items;
-  document.getElementById('t-sum').textContent = '₪' + sum.toLocaleString();
+  let items=0,sum=0;
+  allLamps().forEach(l=>{ const q=state[l.id]||0; if(q>0){items++; sum+=q*l.price;} });
+  const ti=document.getElementById('t-items'), ts=document.getElementById('t-sum');
+  if(prevTotals.items!==null && (prevTotals.items!==items||prevTotals.sum!==sum)){ bump(ti); bump(ts); }
+  ti.textContent=items; ts.textContent='₪'+sum.toLocaleString();
+  prevTotals={items,sum};
+  if(document.getElementById('nav-tabs').children.length) renderNav();
 }
 
-function chipBar(el, groups, current, cb){
+function chipBar(el, groups, current, counts, cb){
   el.innerHTML='';
   groups.forEach(g=>{
     const b=document.createElement('button');
-    b.className='chip'+(g===current?' active':''); b.textContent=g;
+    b.className='chip'+(g===current?' active':'');
+    b.innerHTML=`${g} <small>${counts[g]}</small>`;
     b.onclick=()=>cb(g); el.appendChild(b);
   });
-  if(el.id==='lamp-filters'){
-    const s=document.createElement('select');
-    s.innerHTML='<option value="orig">סדר מקורי</option><option value="asc">מחיר: מהזול ליקר</option><option value="desc">מחיר: מהיקר לזול</option>';
-    s.value=lampSort; s.onchange=()=>{lampSort=s.value; render();};
-    el.appendChild(s);
-  }
 }
 
-function render(){
-  chipBar(document.getElementById('lamp-filters'), LGROUPS, lampFilter, g=>{lampFilter=g; render();});
-  chipBar(document.getElementById('color-filters'), CGROUPS, colorFilter, g=>{colorFilter=g; render();});
+/* FLIP animation: smooth reorder on filter/sort */
+function flip(gridEl, renderFn){
+  const first={};
+  gridEl.querySelectorAll('[data-id]').forEach(c=>{ first[c.dataset.id]=c.getBoundingClientRect(); });
+  renderFn();
+  gridEl.querySelectorAll('[data-id]').forEach(c=>{
+    const f=first[c.dataset.id];
+    if(!f){ return; } // new card -> pop animation plays
+    c.style.animation='none';
+    const l=c.getBoundingClientRect();
+    const dx=f.left-l.left, dy=f.top-l.top;
+    if(dx||dy){
+      c.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'translate(0,0)'}],{duration:320,easing:'cubic-bezier(.22,.9,.35,1)'});
+    }
+  });
+}
 
-  let lamps = LAMPS.filter(l=>lampFilter==='הכל'||l.group===lampFilter);
-  if(lampSort==='asc') lamps=[...lamps].sort((a,b)=>a.price-b.price);
-  if(lampSort==='desc') lamps=[...lamps].sort((a,b)=>b.price-a.price);
+function lampCounts(){ const c={'הכל':allLamps().length}; LGROUPS().slice(1).forEach(g=>c[g]=allLamps().filter(l=>l.group===g).length); return c; }
+function colorCounts(){ const c={'הכל':COLORS.length}; CGROUPS.slice(1).forEach(g=>c[g]=COLORS.filter(x=>x.group===g).length); return c; }
 
-  const lg = document.getElementById('lamp-grid'); lg.innerHTML='';
-  lamps.forEach(l=>{
-    const q = state[l.id]||0;
-    const c = document.createElement('div');
-    c.className='card'+(q===0?' removed':'');
-    c.innerHTML = `
+function visibleLamps(){
+  let ls = allLamps().filter(l=>lampFilter==='הכל'||l.group===lampFilter);
+  if(lampSort==='asc') ls=[...ls].sort((a,b)=>a.price-b.price);
+  if(lampSort==='desc') ls=[...ls].sort((a,b)=>b.price-a.price);
+  return ls;
+}
+
+function renderLamps(){
+  chipBar(document.getElementById('lamp-filters'), LGROUPS(), lampFilter, lampCounts(), g=>{lampFilter=g; flip(document.getElementById('lamp-grid'), renderLampGrid); renderLamps();});
+  const bar=document.getElementById('lamp-filters');
+  const seg=document.createElement('div'); seg.className='seg';
+  [['orig','סדר מקורי'],['asc','זול → יקר'],['desc','יקר → זול']].forEach(([v,t])=>{
+    const b=document.createElement('button'); b.textContent=t; b.className=v===lampSort?'active':'';
+    b.onclick=()=>{lampSort=v; flip(document.getElementById('lamp-grid'), renderLampGrid); renderLamps();};
+    seg.appendChild(b);
+  });
+  bar.appendChild(seg);
+  const addB=document.createElement('button');
+  addB.className='chip'; addB.innerHTML='➕ הוספת פריט';
+  addB.onclick=openAdd; bar.appendChild(addB);
+  renderLampGrid();
+}
+
+function renderLampGrid(){
+  const lg=document.getElementById('lamp-grid'); lg.innerHTML='';
+  visibleLamps().forEach((l,i)=>{
+    const q=state[l.id]||0;
+    const c=document.createElement('div');
+    c.className='card'+(q===0?' removed':''); c.dataset.id=l.id;
+    c.style.animationDelay=(Math.min(i,12)*28)+'ms';
+    c.innerHTML=`
       <span class="badge">${l.group}</span>
-      ${q>0?`<button class="x" title="הסרה" onclick="setQty('${l.id}',0)">✕</button>`:''}
-      <img src="${l.img}" alt="${l.name}" loading="lazy">
+      ${q>0?`<button class="x" title="הסרה" onclick="removeAnim('${l.id}',this)">✕</button>`:''}
+      ${l.img?`<div class="imgwrap" onclick="openLB('${l.id}')"><img class="ph" src="${l.img}" alt="${l.name}" loading="lazy"></div>`:`<div class="noimg">🛒</div>`}
       <div class="name">${l.name}</div>
       <div class="price">₪ ${l.price.toLocaleString()} ${l.note?`<div class="note">${l.note}</div>`:''}</div>
       ${q>0?`
       <div class="row">
         <div class="qty">
-          <button onclick="setQty('${l.id}',${q+1})">+</button><span>${q}</span><button onclick="setQty('${l.id}',${q-1})">−</button>
+          <button onclick="setQty('${l.id}',${q+1})">+</button><span>${q}</span><button onclick="setQty('${l.id}',${q-1},this)">−</button>
         </div>
         <a class="plink" href="${l.url}" target="_blank" rel="noopener">לצפייה בחנות ↗</a>
       </div>`:`
-      <button class="restore" onclick="setQty('${l.id}',1)">↩ החזרה לרשימה</button>`}
+      <button class="restore" onclick="setQty('${l.id}',1)">↩ החזרה לרשימה</button>
+      ${l.custom?`<button class="del" onclick="delCustom('${l.id}')">🗑 מחיקה לצמיתות</button>`:''}`}
     `;
     lg.appendChild(c);
   });
+  totals();
+}
 
-  const cg = document.getElementById('color-grid'); cg.innerHTML='';
-  COLORS.filter(c=>colorFilter==='הכל'||c.group===colorFilter).forEach(col=>{
-    const on = (state[col.id]||0)>0;
-    const c = document.createElement('div');
-    c.className='card colcard'+(on?'':' removed');
-    c.onclick=()=>{ state[col.id]=on?0:1; save(); render(); };
-    c.innerHTML = `
+function renderColors(){
+  chipBar(document.getElementById('color-filters'), CGROUPS, colorFilter, colorCounts(), g=>{colorFilter=g; flip(document.getElementById('color-grid'), renderColorGrid);});
+  renderColorGrid();
+}
+function renderColorGrid(){
+  const cg=document.getElementById('color-grid'); cg.innerHTML='';
+  COLORS.filter(c=>colorFilter==='הכל'||c.group===colorFilter).forEach((col,i)=>{
+    const on=(state[col.id]||0)>0;
+    const c=document.createElement('div');
+    c.className='card colcard'+(on?'':' removed'); c.dataset.id=col.id;
+    c.style.animationDelay=(Math.min(i,12)*22)+'ms';
+    c.onclick=()=>{ state[col.id]=on?0:1; save(); renderColorGrid(); };
+    c.innerHTML=`
       <div class="check">${on?'✓':'–'}</div>
       <div class="swatch" style="background:#${col.hex}"></div>
       <div class="name">${col.name}</div>
@@ -179,30 +370,178 @@ function render(){
     `;
     cg.appendChild(c);
   });
-
   totals();
 }
 
-function setQty(id, q){ state[id]=Math.max(0,Math.min(99,q)); save(); render(); }
-function resetAll(){ if(confirm('לאפס את כל הבחירות?')){ state=defaults(); save(); history.replaceState(null,'',location.pathname); render(); } }
+function removeAnim(id, btn){
+  const card=btn.closest('.card');
+  card.classList.add('bye');
+  setTimeout(()=>setQty(id,0), 220);
+}
+function setQty(id,q,btn){
+  q=Math.max(0,Math.min(99,q));
+  if(q===0 && btn){ removeAnim(id,btn); return; }
+  state[id]=q; save(); renderLampGrid();
+}
+function resetAll(){ if(confirm('לאפס את כל הבחירות?')){ state=defaults(); save(); history.replaceState(null,'',location.pathname); renderLamps(); renderColors(); } }
 
-function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+/* ---------- lightbox ---------- */
+function openLB(id){
+  lbList = visibleLamps().map(l=>l.id);
+  lbIdx = lbList.indexOf(id);
+  fillLB(); document.getElementById('lb').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function fillLB(){
+  const l=allLamps().find(x=>x.id===lbList[lbIdx]);
+  const q=state[l.id]||0;
+  document.getElementById('lb-box').innerHTML=`
+    ${l.img?`<img src="${l.img}" alt="${l.name}">`:`<div class="noimg" style="width:280px">🛒</div>`}
+    <div class="info">
+      <h3>${l.name}</h3>
+      <div class="meta">${l.group} · ${lbIdx+1}/${lbList.length}</div>
+      <div class="price">₪ ${l.price.toLocaleString()}</div>
+      ${l.note?`<div class="note">${l.note}</div>`:''}
+      <div class="row" style="margin-top:16px">
+        ${q>0?`
+        <div class="qty">
+          <button onclick="lbQty(1)">+</button><span>${q}</span><button onclick="lbQty(-1)">−</button>
+        </div>`:`<button class="restore" style="margin:0" onclick="lbRestore()">↩ החזרה לרשימה</button>`}
+      </div>
+      <p style="margin-top:14px"><a class="plink" href="${l.url}" target="_blank" rel="noopener">לצפייה בחנות ↗</a></p>
+    </div>`;
+}
+function lbQty(d){ const id=lbList[lbIdx]; state[id]=Math.max(0,(state[id]||0)+d); save(); fillLB(); renderLampGrid(); }
+function lbRestore(){ const id=lbList[lbIdx]; state[id]=1; save(); fillLB(); renderLampGrid(); }
+function stepLB(d){ lbIdx=(lbIdx+d+lbList.length)%lbList.length; fillLB(); }
+function closeLB(){ document.getElementById('lb').classList.remove('open'); document.body.style.overflow=''; }
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('lb').classList.contains('open')) return;
+  if(e.key==='Escape') closeLB();
+  if(e.key==='ArrowLeft') stepLB(1);
+  if(e.key==='ArrowRight') stepLB(-1);
+});
 
-function copyLink(){
-  const url = location.origin + location.pathname + '#s=' + encState();
-  navigator.clipboard.writeText(url).then(()=>toast('הקישור הועתק — שלחו אותו בוואטסאפ 🎉'));
+/* ---------- views ---------- */
+const VIEWS=[{id:'lamps',label:'💡 תאורה'},{id:'colors',label:'🎨 גוונים'}];
+let view = localStorage.getItem('home-view') || 'lamps';
+function renderNav(){
+  const nav=document.getElementById('nav-tabs'); nav.innerHTML='';
+  VIEWS.forEach(v=>{
+    const b=document.createElement('button');
+    b.className=v.id===view?'active':'';
+    const cnt = v.id==='lamps' ? allLamps().filter(l=>(state[l.id]||0)>0).length
+                               : COLORS.filter(c=>(state[c.id]||0)>0).length;
+    b.innerHTML=`${v.label} <small>${cnt}</small>`;
+    b.onclick=()=>switchView(v.id);
+    nav.appendChild(b);
+  });
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on', s.id==='view-'+view));
+}
+function switchView(v){ view=v; try{localStorage.setItem('home-view',v);}catch(e){} renderNav(); window.scrollTo({top:0,behavior:'smooth'}); }
+
+/* ---------- summary modal ---------- */
+function absUrl(p){ return new URL(p, location.href).href; }
+function openSum(){ renderSum(); document.getElementById('sum').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeSum(){ document.getElementById('sum').classList.remove('open'); document.body.style.overflow=''; }
+function renderSum(){
+  const kept=allLamps().filter(l=>(state[l.id]||0)>0);
+  let sum=0;
+  let rows=kept.map((l,i)=>{
+    const q=state[l.id], t=q*l.price; sum+=t;
+    return `<tr><td>${i+1}</td><td>${l.img?`<img src="${l.img}" loading="lazy">`:''}</td><td>${l.name}</td><td>${l.group}</td><td>${q}</td><td>₪${l.price.toLocaleString()}</td><td>₪${t.toLocaleString()}</td>
+      <td><a href="${l.url}" target="_blank" rel="noopener">למוצר ↗</a></td><td>${l.img?`<a href="${absUrl(l.img)}" target="_blank" rel="noopener">לתמונה ↗</a>`:''}</td></tr>`;
+  }).join('');
+  const lampsTable = kept.length ? `
+    <h3>💡 גופי תאורה <span class="meta">(${kept.length})</span>
+      <span class="tools">
+        <button onclick="copyTable('lamps','tsv')">📊 העתקה לאקסל</button>
+        <button onclick="copyTable('lamps','text')">📋 העתקה כטקסט</button>
+      </span></h3>
+    <table class="sumtable">
+      <thead><tr><th>#</th><th>תמונה</th><th>שם</th><th>סוג</th><th>כמות</th><th>מחיר</th><th>סה"כ</th><th>קישור למוצר</th><th>קישור לתמונה</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td colspan="6">סה"כ</td><td>₪${sum.toLocaleString()}</td><td colspan="2"></td></tr></tfoot>
+    </table>` : '<h3>💡 גופי תאורה</h3><p class="meta">לא נבחרו פריטים</p>';
+
+  const keptC=COLORS.filter(c=>(state[c.id]||0)>0);
+  const colorRows=keptC.map((c,i)=>`<tr><td>${i+1}</td><td><span class="sw" style="background:#${c.hex}"></span></td><td>${c.name}</td><td>${c.code}</td><td dir="ltr">#${c.hex.toUpperCase()}</td><td>${c.group}</td></tr>`).join('');
+  const colorsTable = keptC.length ? `
+    <h3>🎨 גוונים לקירות <span class="meta">(${keptC.length})</span>
+      <span class="tools">
+        <button onclick="copyTable('colors','tsv')">📊 העתקה לאקסל</button>
+        <button onclick="copyTable('colors','text')">📋 העתקה כטקסט</button>
+      </span></h3>
+    <table class="sumtable">
+      <thead><tr><th>#</th><th>גוון</th><th>שם</th><th>קוד</th><th>HEX</th><th>משפחה</th></tr></thead>
+      <tbody>${colorRows}</tbody>
+    </table>` : '<h3>🎨 גוונים לקירות</h3><p class="meta">לא נבחרו גוונים</p>';
+
+  document.getElementById('sum-content').innerHTML = lampsTable + colorsTable;
+}
+function copyTable(kind, fmt){
+  let out='';
+  if(kind==='lamps'){
+    const kept=allLamps().filter(l=>(state[l.id]||0)>0); let sum=0;
+    if(fmt==='tsv'){
+      out='שם\tסוג\tכמות\tמחיר\tסה"כ\tקישור למוצר\tקישור לתמונה\n';
+      kept.forEach(l=>{ const q=state[l.id], t=q*l.price; sum+=t; out+=`${l.name}\t${l.group}\t${q}\t${l.price}\t${t}\t${l.url}\t${l.img?absUrl(l.img):''}\n`; });
+      out+=`סה"כ\t\t\t\t${sum}\t\t\n`;
+    }else{
+      out='💡 גופי תאורה:\n';
+      kept.forEach(l=>{ const q=state[l.id], t=q*l.price; sum+=t; out+=`• ${l.name}${q>1?' × '+q:''} — ₪${t.toLocaleString()}\n  מוצר: ${l.url}\n  תמונה: ${absUrl(l.img)}\n`; });
+      out+=`סה"כ: ₪${sum.toLocaleString()}\n`;
+    }
+  }else{
+    const keptC=COLORS.filter(c=>(state[c.id]||0)>0);
+    if(fmt==='tsv'){
+      out='שם\tקוד\tHEX\tמשפחה\n';
+      keptC.forEach(c=>out+=`${c.name}\t${c.code}\t#${c.hex.toUpperCase()}\t${c.group}\n`);
+    }else{
+      out='🎨 גוונים (נירלט):\n';
+      keptC.forEach(c=>out+=`• ${c.name} — ${c.code} (#${c.hex.toUpperCase()})\n`);
+    }
+  }
+  navigator.clipboard.writeText(out).then(()=>toast(fmt==='tsv'?'הטבלה הועתקה — הדביקו באקסל/גוגל שיטס 📊':'הרשימה הועתקה 📋'));
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeSum(); closeAdd(); } });
+
+/* ---------- add custom item ---------- */
+function openAdd(){ document.getElementById('add').classList.add('open'); document.body.style.overflow='hidden'; setTimeout(()=>document.getElementById('a-url').focus(),200); }
+function closeAdd(){ document.getElementById('add').classList.remove('open'); document.body.style.overflow=''; }
+function submitAdd(){
+  const gv=id=>document.getElementById(id).value.trim();
+  const url=gv('a-url'), name=gv('a-name'), price=parseInt(gv('a-price'),10), img=gv('a-img'), group=gv('a-group');
+  if(!/^https?:\/\//.test(url)){ toast('צריך קישור מלא למוצר (מתחיל ב-https)'); return; }
+  if(!name){ toast('חסר שם למוצר'); return; }
+  if(!(price>=0)){ toast('חסר מחיר'); return; }
+  if(img && !/^https?:\/\//.test(img)){ toast('קישור התמונה לא תקין'); return; }
+  const id='X'+Date.now().toString(36);
+  CUSTOM.push({id, name, price, url, img, group, note:'', custom:true});
+  saveCustom(); state[id]=1; save();
+  ['a-url','a-name','a-price','a-img'].forEach(i=>document.getElementById(i).value='');
+  closeAdd(); lampFilter='הכל'; renderLamps(); toast('✨ "'+name+'" נוסף לרשימה');
+}
+function delCustom(id){
+  if(!confirm('למחוק את הפריט לצמיתות?')) return;
+  CUSTOM=CUSTOM.filter(c=>c.id!==id); delete state[id];
+  saveCustom(); save(); renderLamps();
 }
 
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2400); }
+function copyLink(){
+  const url=location.origin+location.pathname+'#s='+encState();
+  navigator.clipboard.writeText(url).then(()=>toast('הקישור הועתק — שלחו אותו בוואטסאפ 🎉'));
+}
 function copySummary(){
-  let lines = ['🏠 הבית שלנו — בחירת תאורה וגוונים',''];
-  let sum=0;
-  const kept = LAMPS.filter(l=>(state[l.id]||0)>0);
+  let lines=['🏠 הבית שלנו — בחירת תאורה וגוונים','']; let sum=0;
+  const kept=allLamps().filter(l=>(state[l.id]||0)>0);
   if(kept.length){
     lines.push('💡 גופי תאורה:');
     kept.forEach(l=>{ const q=state[l.id]; sum+=q*l.price; lines.push(`• ${l.name}${q>1?' × '+q:''} — ₪${(q*l.price).toLocaleString()}`); });
     lines.push(`סה"כ: ₪${sum.toLocaleString()}`,'');
   }
-  const keptC = COLORS.filter(c=>(state[c.id]||0)>0);
+  const keptC=COLORS.filter(c=>(state[c.id]||0)>0);
   if(keptC.length){
     lines.push('🎨 גוונים (נירלט):');
     keptC.forEach(c=>lines.push(`• ${c.name} — ${c.code}`));
@@ -210,7 +549,7 @@ function copySummary(){
   navigator.clipboard.writeText(lines.join('\n')).then(()=>toast('הסיכום הועתק 📋'));
 }
 
-loadState(); render();
+loadState(); renderLamps(); renderColors(); renderNav();
 </script>
 </body>
 </html>
