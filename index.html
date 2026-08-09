@@ -218,18 +218,28 @@
   <div class="box">
     <h3>➕ הוספת פריט מהחנות</h3>
     <label>קישור למוצר *</label>
-    <input id="a-url" type="url" placeholder="https://..." dir="ltr">
+    <input id="a-url" type="url" placeholder="https://... (הדביקו קישור והפרטים יישלפו אוטומטית)" dir="ltr">
+    <button id="a-fetch" style="width:100%;margin-top:8px" onclick="fetchMeta()">✨ שליפת פרטים אוטומטית מהקישור</button>
+    <label>סקשן</label>
+    <select id="a-section"></select>
     <label>שם המוצר *</label>
     <input id="a-name" type="text" placeholder="למשל: ידית קשת פליז">
     <label>מחיר (₪) *</label>
     <input id="a-price" type="number" min="0" placeholder="199">
     <label>קישור לתמונה (לא חובה)</label>
     <input id="a-img" type="url" placeholder="https://..." dir="ltr">
-    <label>סוג</label>
-    <select id="a-group"><option>אחר</option><option>קיר</option><option>תלוי</option><option>ספוט</option></select>
+    <div id="a-group-wrap">
+      <label>סוג</label>
+      <select id="a-group"><option>אחר</option><option>קיר</option><option>תלוי</option><option>ספוט</option></select>
+    </div>
     <div style="display:flex;gap:8px;margin-top:18px">
       <button class="primary" style="flex:1" onclick="submitAdd()">הוספה לרשימה</button>
       <button onclick="closeAdd()">ביטול</button>
+    </div>
+    <div style="margin-top:16px;padding:12px;background:var(--accent-soft);border-radius:12px;font-size:12.5px;line-height:1.5">
+      💡 <b>טיפ — הוספה בלחיצה מכל חנות:</b> גררו את הכפתור
+      <a id="bookmarklet" style="display:inline-block;background:var(--accent);color:#fff;border-radius:8px;padding:3px 10px;font-weight:700;text-decoration:none;margin:0 4px" href="#">➕ לדף הבית שלנו</a>
+      לסרגל הסימניות. בעמוד מוצר בחנות — לחצו עליו והמוצר יגיע לכאן מלא ומוכן (עובד גם בחנויות שמציגות מחיר רק אחרי התחברות).
     </div>
   </div>
 </div>
@@ -250,18 +260,22 @@ let lampFilter='הכל', colorFilter='הכל', lampSort='orig';
 let lbList=[], lbIdx=0;
 let prevTotals={items:null,sum:null};
 
-function allLamps(){ return LAMPS.concat(CUSTOM); }
+let SECTIONS = [];
+function loadSections(){ try{ SECTIONS = JSON.parse(localStorage.getItem('home-sections')||'[]'); }catch(e){ SECTIONS=[]; } }
+function saveSections(){ try{ localStorage.setItem('home-sections', JSON.stringify(SECTIONS)); }catch(e){} }
+function allLamps(){ return LAMPS.concat(CUSTOM.filter(c=>!c.section||c.section==='lamps')); }
+function sectionItems(sid){ return CUSTOM.filter(c=>c.section===sid); }
 function allItems(){ return LAMPS.concat(CUSTOM, HANDLES); }
 function LGROUPS(){ return CUSTOM.some(c=>c.group==='אחר') ? BASE_LGROUPS.concat('אחר') : BASE_LGROUPS; }
 function defaults(){ const s={}; allItems().forEach(l=>s[l.id]=1); COLORS.forEach(c=>s[c.id]=1); return s; }
 function loadCustom(){ try{ CUSTOM = JSON.parse(localStorage.getItem('home-custom')||'[]'); }catch(e){ CUSTOM=[]; } }
 function saveCustom(){ try{ localStorage.setItem('home-custom', JSON.stringify(CUSTOM)); }catch(e){} }
 function loadState(){
-  loadCustom();
+  loadCustom(); loadSections();
   const m = location.hash.match(/#s=([A-Za-z0-9\-_]+)/);
   if(m){ try{
     const obj = JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')))));
-    if(obj && obj.q){ CUSTOM = obj.c||[]; saveCustom(); state={...defaults(),...obj.q}; }
+    if(obj && obj.q){ CUSTOM = obj.c||[]; saveCustom(); SECTIONS = obj.s||[]; saveSections(); state={...defaults(),...obj.q}; }
     else state={...defaults(),...obj};
     save(); return;
   }catch(e){} }
@@ -272,7 +286,7 @@ function save(){ try{ localStorage.setItem('home-picks', JSON.stringify(state));
 function encState(){
   const diff={}, d=defaults();
   for(const k in state) if(state[k]!==d[k]) diff[k]=state[k];
-  const payload = CUSTOM.length ? {q:diff, c:CUSTOM} : diff;
+  const payload = (CUSTOM.length||SECTIONS.length) ? {q:diff, c:CUSTOM, s:SECTIONS} : diff;
   return btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
 
@@ -447,13 +461,20 @@ function setQty(id,q,btn){
   q=Math.max(0,Math.min(99,q));
   if(q===0 && btn){ removeAnim(id,btn); return; }
   state[id]=q; save();
-  if(id.startsWith('H')) renderHandleGrid(); else renderLampGrid();
+  const item=CUSTOM.find(c=>c.id===id);
+  if(id.startsWith('H')) renderHandleGrid();
+  else if(item&&item.section&&item.section!=='lamps') renderSectionGrid(item.section);
+  else renderLampGrid();
 }
-function resetAll(){ if(confirm('לאפס את כל הבחירות?')){ state=defaults(); save(); history.replaceState(null,'',location.pathname); renderLamps(); renderHandles(); renderColors(); } }
+function resetAll(){ if(confirm('לאפס את כל הבחירות?')){ state=defaults(); save(); history.replaceState(null,'',location.pathname); renderLamps(); renderHandles(); renderColors(); renderAllSections(); } }
 
 /* ---------- lightbox ---------- */
 function openLB(id){
-  lbList = (id.startsWith('H') ? visibleHandles() : visibleLamps()).map(l=>l.id);
+  const item=CUSTOM.find(c=>c.id===id);
+  const list = id.startsWith('H') ? visibleHandles()
+             : (item&&item.section&&item.section!=='lamps') ? sectionItems(item.section)
+             : visibleLamps();
+  lbList = list.map(l=>l.id);
   lbIdx = lbList.indexOf(id);
   fillLB(); document.getElementById('lb').classList.add('open');
   document.body.style.overflow='hidden';
@@ -465,7 +486,7 @@ function fillLB(){
     ${l.img?`<img src="${l.img}" alt="${l.name}">`:`<div class="noimg" style="width:280px">🛒</div>`}
     <div class="info">
       <h3>${l.name}</h3>
-      <div class="meta">${l.group||('דגם '+l.model)} · ${lbIdx+1}/${lbList.length}</div>
+      <div class="meta">${l.group||(l.model?('דגם '+l.model):'')} · ${lbIdx+1}/${lbList.length}</div>
       <div class="price">${l.price?('₪ '+l.price.toLocaleString()):'<span class="note">כלול במחיר המטבח</span>'}</div>
       ${l.note?`<div class="note">${l.note}</div>`:''}
       <div class="row" style="margin-top:16px">
@@ -489,23 +510,102 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ---------- views ---------- */
-const VIEWS=[{id:'lamps',label:'💡 תאורה'},{id:'handles',label:'🗄️ ידיות'},{id:'colors',label:'🎨 גוונים'}];
+function VIEWS(){
+  return [{id:'lamps',label:'💡 תאורה'},{id:'handles',label:'🗄️ ידיות'},{id:'colors',label:'🎨 גוונים'}]
+    .concat(SECTIONS.map(s=>({id:s.id,label:(s.emoji||'📦')+' '+s.label})));
+}
 let view = localStorage.getItem('home-view') || 'lamps';
 function renderNav(){
   const nav=document.getElementById('nav-tabs'); nav.innerHTML='';
-  VIEWS.forEach(v=>{
+  ensureSectionViews();
+  VIEWS().forEach(v=>{
     const b=document.createElement('button');
     b.className=v.id===view?'active':'';
     const cnt = v.id==='lamps' ? allLamps().filter(l=>(state[l.id]||0)>0).length
               : v.id==='handles' ? HANDLES.filter(h=>(state[h.id]||0)>0).length
-              : COLORS.filter(c=>(state[c.id]||0)>0).length;
+              : v.id==='colors' ? COLORS.filter(c=>(state[c.id]||0)>0).length
+              : sectionItems(v.id).filter(x=>(state[x.id]||0)>0).length;
     b.innerHTML=`${v.label} <small>${cnt}</small>`;
     b.onclick=()=>switchView(v.id);
     nav.appendChild(b);
   });
+  const plus=document.createElement('button');
+  plus.innerHTML='➕'; plus.title='סקשן חדש';
+  plus.onclick=createSection;
+  nav.appendChild(plus);
   document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on', s.id==='view-'+view));
 }
 function switchView(v){ view=v; try{localStorage.setItem('home-view',v);}catch(e){} renderNav(); window.scrollTo({top:0,behavior:'smooth'}); }
+
+/* ---------- custom sections ---------- */
+function ensureSectionViews(){
+  SECTIONS.forEach(s=>{
+    if(document.getElementById('view-'+s.id)) return;
+    const sec=document.createElement('section');
+    sec.className='view'; sec.id='view-'+s.id;
+    sec.innerHTML=`
+      <div class="section-title"><h2>${s.emoji||'📦'} ${s.label}</h2><span>סקשן אישי · אפשר להוסיף פריטים מקישורים</span>
+        <button class="ghost" style="margin-inline-start:auto" onclick="deleteSection('${s.id}')">🗑 מחיקת הסקשן</button></div>
+      <div class="toolbar"><button class="chip" onclick="openAdd('${s.id}')">➕ הוספת פריט</button></div>
+      <div class="grid" id="grid-${s.id}"></div>`;
+    document.querySelector('main').appendChild(sec);
+    renderSectionGrid(s.id);
+  });
+  // remove views of deleted sections
+  document.querySelectorAll('section.view').forEach(el=>{
+    const id=el.id.replace('view-','');
+    if(id.startsWith('S') && !SECTIONS.find(s=>s.id===id)) el.remove();
+  });
+}
+function renderSectionGrid(sid){
+  const g=document.getElementById('grid-'+sid); if(!g) return;
+  g.innerHTML='';
+  const items=sectionItems(sid);
+  if(!items.length){ g.innerHTML='<p class="meta" style="grid-column:1/-1">אין פריטים עדיין — לחצו על ➕ הוספת פריט והדביקו קישור מהחנות</p>'; }
+  items.forEach((l,i)=>{
+    const q=state[l.id]||0;
+    const c=document.createElement('div');
+    c.className='card'+(q===0?' removed':''); c.dataset.id=l.id;
+    c.style.animationDelay=(Math.min(i,12)*28)+'ms';
+    c.innerHTML=`
+      ${q>0?`<button class="x" title="הסרה" onclick="removeAnim('${l.id}',this)">✕</button>`:''}
+      ${l.img?`<div class="imgwrap" onclick="openLB('${l.id}')"><img class="ph" src="${l.img}" alt="${l.name}" loading="lazy"></div>`:`<div class="noimg">🛒</div>`}
+      <div class="name">${l.name}</div>
+      <div class="price">${l.price?('₪ '+l.price.toLocaleString()):''}</div>
+      ${q>0?`
+      <div class="row">
+        <div class="qty">
+          <button onclick="setQty('${l.id}',${q+1})">+</button><span>${q}</span><button onclick="setQty('${l.id}',${q-1},this)">−</button>
+        </div>
+        <a class="plink" href="${l.url}" target="_blank" rel="noopener">לצפייה בחנות ↗</a>
+      </div>`:`
+      <button class="restore" onclick="setQty('${l.id}',1)">↩ החזרה לרשימה</button>
+      <button class="del" onclick="delCustom('${l.id}')">🗑 מחיקה לצמיתות</button>`}
+    `;
+    g.appendChild(c);
+  });
+  totals();
+}
+function renderAllSections(){ SECTIONS.forEach(s=>renderSectionGrid(s.id)); }
+function createSection(){
+  const label=prompt('שם הסקשן החדש (למשל: ברזים, אריחים, כיורים):');
+  if(!label||!label.trim()) return;
+  const emoji=prompt('אימוג\'י לסקשן (לא חובה):')||'📦';
+  const id='S'+Date.now().toString(36);
+  SECTIONS.push({id, label:label.trim(), emoji:emoji.trim()||'📦'});
+  saveSections(); switchView(id); toast('✨ הסקשן "'+label.trim()+'" נוצר — הוסיפו פריטים');
+}
+function deleteSection(sid){
+  const s=SECTIONS.find(x=>x.id===sid);
+  const items=sectionItems(sid);
+  if(!confirm(`למחוק את הסקשן "${s.label}"${items.length?` ואת ${items.length} הפריטים שבו`:''}?`)) return;
+  SECTIONS=SECTIONS.filter(x=>x.id!==sid);
+  CUSTOM=CUSTOM.filter(c=>c.section!==sid);
+  items.forEach(i=>delete state[i.id]);
+  saveSections(); saveCustom(); save();
+  if(view===sid) view='lamps';
+  renderNav(); totals();
+}
 
 /* ---------- summary modal ---------- */
 function absUrl(p){ return new URL(p, location.href).href; }
@@ -550,6 +650,29 @@ function renderSum(){
       ${hasHPrices?`<tfoot><tr><td colspan="6">סה"כ</td><td>₪${hsum.toLocaleString()}</td><td colspan="2"></td></tr></tfoot>`:''}
     </table>` : '<h3>🗄️ ידיות למטבח</h3><p class="meta">לא נבחרו פריטים</p>';
 
+  let sectionTables='';
+  SECTIONS.forEach(s=>{
+    const kept=sectionItems(s.id).filter(x=>(state[x.id]||0)>0);
+    if(!kept.length){ sectionTables+=`<h3>${s.emoji||'📦'} ${s.label}</h3><p class="meta">לא נבחרו פריטים</p>`; return; }
+    let ssum=0;
+    const rows=kept.map((l,i)=>{
+      const q=state[l.id], t=q*(l.price||0); ssum+=t;
+      return `<tr><td>${i+1}</td><td>${l.img?`<img src="${l.img}" loading="lazy">`:''}</td><td>${l.name}</td><td>${q}</td><td>₪${(l.price||0).toLocaleString()}</td><td>₪${t.toLocaleString()}</td>
+        <td><a href="${l.url}" target="_blank" rel="noopener">למוצר ↗</a></td><td>${l.img?`<a href="${l.img}" target="_blank" rel="noopener">לתמונה ↗</a>`:''}</td></tr>`;
+    }).join('');
+    sectionTables+=`
+    <h3>${s.emoji||'📦'} ${s.label} <span class="meta">(${kept.length})</span>
+      <span class="tools">
+        <button onclick="copyTable('sec:${s.id}','tsv')">📊 העתקה לאקסל</button>
+        <button onclick="copyTable('sec:${s.id}','text')">📋 העתקה כטקסט</button>
+      </span></h3>
+    <table class="sumtable">
+      <thead><tr><th>#</th><th>תמונה</th><th>שם</th><th>כמות</th><th>מחיר</th><th>סה"כ</th><th>קישור למוצר</th><th>קישור לתמונה</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td colspan="5">סה"כ</td><td>₪${ssum.toLocaleString()}</td><td colspan="2"></td></tr></tfoot>
+    </table>`;
+  });
+
   const keptC=COLORS.filter(c=>(state[c.id]||0)>0);
   const colorRows=keptC.map((c,i)=>`<tr><td>${i+1}</td><td><span class="sw" style="background:#${c.hex}"></span></td><td>${c.name}</td><td>${c.code}</td><td dir="ltr">#${c.hex.toUpperCase()}</td><td>${c.group}</td><td><a href="${c.url}" target="_blank" rel="noopener">לצבע ↗</a></td></tr>`).join('');
   const colorsTable = keptC.length ? `
@@ -563,7 +686,7 @@ function renderSum(){
       <tbody>${colorRows}</tbody>
     </table>` : '<h3>🎨 גוונים לקירות</h3><p class="meta">לא נבחרו גוונים</p>';
 
-  document.getElementById('sum-content').innerHTML = lampsTable + handlesTable + colorsTable;
+  document.getElementById('sum-content').innerHTML = lampsTable + handlesTable + sectionTables + colorsTable;
 }
 function copyTable(kind, fmt){
   let out='';
@@ -577,6 +700,18 @@ function copyTable(kind, fmt){
       out='💡 גופי תאורה:\n';
       kept.forEach(l=>{ const q=state[l.id], t=q*l.price; sum+=t; out+=`• ${l.name}${q>1?' × '+q:''} — ₪${t.toLocaleString()}\n  מוצר: ${l.url}\n  תמונה: ${absUrl(l.img)}\n`; });
       out+=`סה"כ: ₪${sum.toLocaleString()}\n`;
+    }
+  }else if(kind.startsWith('sec:')){
+    const sid=kind.slice(4), s=SECTIONS.find(x=>x.id===sid);
+    const kept=sectionItems(sid).filter(x=>(state[x.id]||0)>0); let ssum=0;
+    if(fmt==='tsv'){
+      out='שם\tכמות\tמחיר\tסה"כ\tקישור למוצר\tקישור לתמונה\n';
+      kept.forEach(l=>{ const q=state[l.id], t=q*(l.price||0); ssum+=t; out+=`${l.name}\t${q}\t${l.price||0}\t${t}\t${l.url}\t${l.img||''}\n`; });
+      out+=`סה"כ\t\t\t${ssum}\t\t\n`;
+    }else{
+      out=`${s?s.emoji+' '+s.label:''}:\n`;
+      kept.forEach(l=>{ const q=state[l.id]; ssum+=q*(l.price||0); out+=`• ${l.name}${q>1?' × '+q:''} — ₪${(q*(l.price||0)).toLocaleString()}\n  מוצר: ${l.url}\n${l.img?'  תמונה: '+l.img+'\n':''}`; });
+      out+=`סה"כ: ₪${ssum.toLocaleString()}\n`;
     }
   }else if(kind==='handles'){
     const keptH=HANDLES.filter(h=>(state[h.id]||0)>0); let hsum=0;
@@ -603,25 +738,94 @@ function copyTable(kind, fmt){
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeSum(); closeAdd(); } });
 
 /* ---------- add custom item ---------- */
-function openAdd(){ document.getElementById('add').classList.add('open'); document.body.style.overflow='hidden'; setTimeout(()=>document.getElementById('a-url').focus(),200); }
+function openAdd(preSid){
+  const sel=document.getElementById('a-section');
+  sel.innerHTML='<option value="lamps">💡 תאורה</option>'+SECTIONS.map(s=>`<option value="${s.id}">${s.emoji||'📦'} ${s.label}</option>`).join('');
+  sel.value = preSid || (view!=='handles'&&view!=='colors'?view:'lamps');
+  if(!SECTIONS.length && !preSid) sel.value='lamps';
+  const gw=()=>document.getElementById('a-group-wrap').style.display = sel.value==='lamps'?'':'none';
+  sel.onchange=gw; gw();
+  document.getElementById('add').classList.add('open'); document.body.style.overflow='hidden';
+  setTimeout(()=>document.getElementById('a-url').focus(),200);
+}
 function closeAdd(){ document.getElementById('add').classList.remove('open'); document.body.style.overflow=''; }
+async function fetchMeta(){
+  const url=document.getElementById('a-url').value.trim();
+  if(!/^https?:\/\//.test(url)){ toast('קודם הדביקו קישור למוצר'); return; }
+  const btn=document.getElementById('a-fetch');
+  btn.disabled=true; btn.textContent='⏳ שולף פרטים...';
+  try{
+    const proxies=['https://api.allorigins.win/raw?url=','https://api.codetabs.com/v1/proxy?quest=','https://corsproxy.io/?url='];
+    let html=null;
+    for(const p of proxies){
+      try{
+        const res=await fetch(p+encodeURIComponent(url),{signal:AbortSignal.timeout(12000)});
+        if(res.ok){ const t=await res.text(); if(t && t.length>500){ html=t; break; } }
+      }catch(e){}
+    }
+    if(!html) throw new Error('all proxies failed');
+    const doc=new DOMParser().parseFromString(html,'text/html');
+    const og=p=>doc.querySelector(`meta[property="${p}"]`)?.content||'';
+    let name=og('og:title')||doc.querySelector('title')?.textContent||'';
+    name=name.split(/\s*[|\-–]\s*(?=[^|\-–]*$)/)[0].trim().slice(0,80);
+    const img=og('og:image');
+    let price=og('product:price:amount')||'';
+    if(!price){
+      for(const s of doc.querySelectorAll('script[type="application/ld+json"]')){
+        const m=s.textContent.match(/"price"\s*:\s*"?([\d\.]+)"?/); if(m){ price=m[1]; break; }
+      }
+    }
+    if(!price){ const m=(doc.body?.textContent||'').match(/₪\s*([\d,]+(?:\.\d+)?)/); if(m) price=m[1].replace(/,/g,''); }
+    if(name) document.getElementById('a-name').value=name;
+    if(img) document.getElementById('a-img').value=img;
+    if(price) document.getElementById('a-price').value=Math.round(parseFloat(price));
+    toast(name?'✨ הפרטים נשלפו — בדקו ותקנו אם צריך':'לא הצלחתי לשלוף — מלאו ידנית');
+  }catch(e){ toast('החנות חוסמת שליפה אוטומטית — מלאו ידנית'); }
+  btn.disabled=false; btn.textContent='✨ שליפת פרטים אוטומטית מהקישור';
+}
 function submitAdd(){
   const gv=id=>document.getElementById(id).value.trim();
-  const url=gv('a-url'), name=gv('a-name'), price=parseInt(gv('a-price'),10), img=gv('a-img'), group=gv('a-group');
+  const url=gv('a-url'), name=gv('a-name'), price=parseInt(gv('a-price'),10), img=gv('a-img'), group=gv('a-group'), section=gv('a-section');
   if(!/^https?:\/\//.test(url)){ toast('צריך קישור מלא למוצר (מתחיל ב-https)'); return; }
   if(!name){ toast('חסר שם למוצר'); return; }
   if(!(price>=0)){ toast('חסר מחיר'); return; }
   if(img && !/^https?:\/\//.test(img)){ toast('קישור התמונה לא תקין'); return; }
   const id='X'+Date.now().toString(36);
-  CUSTOM.push({id, name, price, url, img, group, note:'', custom:true});
+  CUSTOM.push({id, name, price, url, img, group, section, note:'', custom:true});
   saveCustom(); state[id]=1; save();
   ['a-url','a-name','a-price','a-img'].forEach(i=>document.getElementById(i).value='');
-  closeAdd(); lampFilter='הכל'; renderLamps(); toast('✨ "'+name+'" נוסף לרשימה');
+  closeAdd();
+  if(section==='lamps'){ lampFilter='הכל'; renderLamps(); switchView('lamps'); }
+  else { renderSectionGrid(section); switchView(section); }
+  toast('✨ "'+name+'" נוסף לרשימה');
+}
+/* bookmarklet: grabs product info from any store page the user is viewing */
+(function(){
+  const code="(function(){var d=document,q=function(p){var m=d.querySelector('meta[property=\"'+p+'\"]');return m?m.content:''};var n=q('og:title')||d.title;n=n.split(/\\s*[|\\u2013-]\\s*(?=[^|\\u2013-]*$)/)[0].trim();var i=q('og:image');var pm=(d.body.innerText.match(/\\u20aa\\s*([\\d,]+(?:\\.\\d+)?)/)||[])[1]||'';var pl={u:location.href,n:n,i:i,p:pm.replace(/,/g,'')};window.open('https://yaelavgil.github.io/home-picks/#add='+btoa(unescape(encodeURIComponent(JSON.stringify(pl)))));})()";
+  const el=document.getElementById('bookmarklet');
+  if(el){ el.href='javascript:'+encodeURIComponent(code); el.onclick=e=>{e.preventDefault(); toast('גררו אותי לסרגל הסימניות, לא ללחוץ כאן 🙂');}; }
+})();
+function checkIncomingAdd(){
+  const m=location.hash.match(/#add=([A-Za-z0-9+/=\-_]+)/);
+  if(!m) return;
+  try{
+    const p=JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')))));
+    history.replaceState(null,'',location.pathname);
+    openAdd();
+    document.getElementById('a-url').value=p.u||'';
+    document.getElementById('a-name').value=(p.n||'').slice(0,80);
+    document.getElementById('a-img').value=p.i||'';
+    if(p.p) document.getElementById('a-price').value=Math.round(parseFloat(p.p));
+    toast('✨ המוצר הגיע מהחנות — בחרו סקשן ואשרו');
+  }catch(e){}
 }
 function delCustom(id){
   if(!confirm('למחוק את הפריט לצמיתות?')) return;
+  const item=CUSTOM.find(c=>c.id===id);
   CUSTOM=CUSTOM.filter(c=>c.id!==id); delete state[id];
-  saveCustom(); save(); renderLamps();
+  saveCustom(); save();
+  if(item&&item.section&&item.section!=='lamps') renderSectionGrid(item.section); else renderLamps();
+  renderNav();
 }
 
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2400); }
@@ -645,7 +849,7 @@ function copySummary(){
   navigator.clipboard.writeText(lines.join('\n')).then(()=>toast('הסיכום הועתק 📋'));
 }
 
-loadState(); renderLamps(); renderHandles(); renderColors(); renderNav();
+loadState(); renderLamps(); renderHandles(); renderColors(); renderNav(); checkIncomingAdd();
 </script>
 </body>
 </html>
