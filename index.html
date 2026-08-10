@@ -154,6 +154,15 @@
   #add input,#add select{width:100%;font-family:inherit;font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
   #add input:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
   .noimg{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:44px;background:var(--accent-soft);border-radius:12px}
+  #a-status{display:none;margin-top:8px;padding:10px 12px;border-radius:12px;font-size:13px;font-weight:600;align-items:center;gap:9px}
+  #a-status.show{display:flex}
+  #a-status.working{background:var(--accent-soft);color:#7a6a4f}
+  #a-status.ok{background:#e4efe7;color:var(--ok)}
+  #a-status.fail{background:#f7e5e3;color:var(--danger)}
+  .spinner{width:16px;height:16px;border:2.5px solid #d8c9ad;border-top-color:var(--accent);border-radius:50%;flex:none;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes fieldflash{0%{background:#e4efe7}100%{background:var(--card)}}
+  .flash{animation:fieldflash 1.2s ease-out}
   .del{width:100%;margin-top:6px;color:var(--danger);font-size:12.5px;border-style:dashed}
   #toast{position:fixed;bottom:-70px;right:50%;transform:translateX(50%);background:var(--ink);color:#fff;padding:12px 24px;border-radius:999px;font-size:14px;font-weight:600;transition:bottom .35s var(--ease);z-index:70;box-shadow:0 8px 30px rgba(0,0,0,.3)}
   #toast.show{bottom:26px}
@@ -220,6 +229,7 @@
     <label>קישור למוצר *</label>
     <input id="a-url" type="url" placeholder="https://... (הדביקו קישור והפרטים יישלפו אוטומטית)" dir="ltr">
     <button id="a-fetch" style="width:100%;margin-top:8px" onclick="fetchMeta()">✨ שליפת פרטים אוטומטית מהקישור</button>
+    <div id="a-status"></div>
     <label>סקשן</label>
     <select id="a-section"></select>
     <label>שם המוצר *</label>
@@ -749,21 +759,31 @@ function openAdd(preSid){
   setTimeout(()=>document.getElementById('a-url').focus(),200);
 }
 function closeAdd(){ document.getElementById('add').classList.remove('open'); document.body.style.overflow=''; }
+let fetching=false;
+function setFetchStatus(cls, html){
+  const st=document.getElementById('a-status');
+  if(!cls){ st.className=''; st.innerHTML=''; return; }
+  st.className='show '+cls; st.innerHTML=html;
+}
 async function fetchMeta(){
+  if(fetching) return;
   const url=document.getElementById('a-url').value.trim();
   if(!/^https?:\/\//.test(url)){ toast('קודם הדביקו קישור למוצר'); return; }
+  fetching=true;
   const btn=document.getElementById('a-fetch');
   btn.disabled=true; btn.textContent='⏳ שולף פרטים...';
   try{
     const proxies=['https://api.allorigins.win/raw?url=','https://api.codetabs.com/v1/proxy?quest=','https://corsproxy.io/?url='];
     let html=null;
-    for(const p of proxies){
+    for(let i=0;i<proxies.length;i++){
+      setFetchStatus('working', `<span class="spinner"></span> שולף פרטים מהחנות... ניסיון ${i+1} מתוך ${proxies.length}`);
       try{
-        const res=await fetch(p+encodeURIComponent(url),{signal:AbortSignal.timeout(12000)});
+        const res=await fetch(proxies[i]+encodeURIComponent(url),{signal:AbortSignal.timeout(6000)});
         if(res.ok){ const t=await res.text(); if(t && t.length>500){ html=t; break; } }
       }catch(e){}
     }
     if(!html) throw new Error('all proxies failed');
+    setFetchStatus('working', '<span class="spinner"></span> מנתח את פרטי המוצר...');
     const doc=new DOMParser().parseFromString(html,'text/html');
     const og=p=>doc.querySelector(`meta[property="${p}"]`)?.content||'';
     let name=og('og:title')||doc.querySelector('title')?.textContent||'';
@@ -776,13 +796,25 @@ async function fetchMeta(){
       }
     }
     if(!price){ const m=(doc.body?.textContent||'').match(/₪\s*([\d,]+(?:\.\d+)?)/); if(m) price=m[1].replace(/,/g,''); }
-    if(name) document.getElementById('a-name').value=name;
-    if(img) document.getElementById('a-img').value=img;
-    if(price) document.getElementById('a-price').value=Math.round(parseFloat(price));
-    toast(name?'✨ הפרטים נשלפו — בדקו ותקנו אם צריך':'לא הצלחתי לשלוף — מלאו ידנית');
-  }catch(e){ toast('החנות חוסמת שליפה אוטומטית — מלאו ידנית'); }
+    const flash=id=>{ const el=document.getElementById(id); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); };
+    if(name){ document.getElementById('a-name').value=name; flash('a-name'); }
+    if(img){ document.getElementById('a-img').value=img; flash('a-img'); }
+    if(price){ document.getElementById('a-price').value=Math.round(parseFloat(price)); flash('a-price'); }
+    if(name){
+      const got=[name&&'שם', price&&'מחיר', img&&'תמונה'].filter(Boolean).join(', ');
+      setFetchStatus('ok', `✅ נשלפו: ${got} — בדקו ואשרו`);
+    }else{
+      setFetchStatus('fail', '😕 העמוד נטען אבל בלי פרטי מוצר — מלאו ידנית');
+    }
+  }catch(e){
+    setFetchStatus('fail', '🚫 החנות חוסמת שליפה אוטומטית — מלאו ידנית, או השתמשו בכפתור ➕ שבטיפ למטה (עוקף את החסימה)');
+  }
+  fetching=false;
   btn.disabled=false; btn.textContent='✨ שליפת פרטים אוטומטית מהקישור';
 }
+document.getElementById('a-url').addEventListener('paste', ()=>{
+  setTimeout(()=>{ if(!document.getElementById('a-name').value.trim()) fetchMeta(); }, 150);
+});
 function submitAdd(){
   const gv=id=>document.getElementById(id).value.trim();
   const url=gv('a-url'), name=gv('a-name'), price=parseInt(gv('a-price'),10), img=gv('a-img'), group=gv('a-group'), section=gv('a-section');
