@@ -39,6 +39,13 @@
   .totals b{font-size:21px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;transition:transform .15s}
   .totals b.bump{transform:scale(1.18)}
   .btns{display:flex;gap:8px;flex-wrap:wrap}
+  /* מחוון הסנכרון: הדף הזה שמר פעם בדפדפן אחד בלבד, ולכן חייב להיות גלוי
+     במבט אם מה שנבחר כאן באמת מגיע לרועי או לא. */
+  #syncchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;
+    padding:5px 11px;border-radius:999px;border:1px solid transparent;white-space:nowrap;cursor:default}
+  #syncchip.ok{background:#e8f5ee;color:#176b42;border-color:#b7e0c8}
+  #syncchip.off{background:#fdeceb;color:#9a2b22;border-color:#f3c3bf}
+  #syncchip.wait{background:#f4f4f5;color:#6b6b70;border-color:#e0e0e3}
   button{font-family:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink);transition:all .2s var(--ease)}
   button:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:var(--shadow-hover)}
   button:active{transform:translateY(0) scale(.97)}
@@ -188,6 +195,7 @@
       <span><b id="t-sum">₪0</b><span class="tt">סה"כ</span></span>
     </div>
     <div class="btns">
+      <span id="syncchip" class="wait" title="בודק חיבור ללוח המשותף">⏳ מתחבר…</span>
       <button class="primary" onclick="copyLink()">🔗 שיתוף הבחירות שלי</button>
       <button onclick="openSum()">📋 סיכום</button>
       <button class="ghost" onclick="resetAll()">איפוס</button>
@@ -271,28 +279,194 @@ let lbList=[], lbIdx=0;
 let prevTotals={items:null,sum:null};
 
 let SECTIONS = [];
+
+/* ============================================================================
+   סנכרון ללוח המשותף
+   ----------------------------------------------------------------------------
+   עד 26.11.2026 כל מה שנבחר בדף הזה נשמר ב-localStorage בלבד — כלומר רק
+   בדפדפן אחד ספציפי. רועי לא ראה כלום, מכשיר שני של יעל לא ראה כלום, אף סוכן
+   לא יכול היה לקרוא את הבחירות חזרה, וניקוי נתוני אתר או חלון פרטי מחק הכל
+   בלי התראה. הקישור #s= היה תמונת מצב קפואה, לא שיתוף.
+
+   מעכשיו המסד המשותף (אותו RTDB שכל שאר הדפים של הבית משתמשים בו) הוא מקור
+   האמת, ו-localStorage הוא רק מטמון: ציור ראשון מהיר, ועבודה כשאין רשת.
+
+   מה נשאר מקומי בכוונה: `home-view` — איזה טאב פתוח. זו נוחות של צופה בודד
+   ואין שום טעם לשתף אותה.
+   ========================================================================== */
+const DB='https://home-picks-47450-default-rtdb.europe-west1.firebasedatabase.app';
+const HP=DB+'/picks/_hp';
+let cloudOn=false;      // נדלק רק אחרי סנכרון ראשון שהצליח
+let _applying=false;    // true בזמן החלת תמונת מצב מהשרת, כדי לא להדהד אותה חזרה
+let _shadow=null;       // המצב כפי שהמסד מכיר אותו — הבסיס לחישוב הדלתא
+
+function syncChip(kind,txt,tip){ const el=document.getElementById('syncchip');
+  if(!el) return; el.className=kind; el.textContent=txt; el.title=tip||''; }
+
+/* ---- כתיבות ממתינות -------------------------------------------------------
+   fbPoll() מרענן את המצב כל 5 שניות ממה שהשרת מחזיר. כתיבה שיצאה שנייה קודם
+   לא בהכרח נכנסה לתמונת המצב שהפולינג כבר הספיק לבקש — ואז השינוי "מתבטל
+   מעצמו" על המסך וחוזר בפולינג הבא. זה הבאג שתוקן ב-home-decisions בקומיט
+   aa134fd, ואותה מחלה בדיוק הייתה מחכה כאן. לכן כל כתיבה אופטימית נרשמת כאן
+   ומונחת מחדש על כל תמונת מצב — עד שהשרת עצמו מחזיר את אותו ערך, או עד 90
+   שניות ואז מפסיקים להילחם.                                                */
+const _pend=new Map();
+const _eq=(a,b)=>(a==null&&b==null)||JSON.stringify(a)===JSON.stringify(b);
+function _pendMark(k,v){ _pend.set(k,{v,t:Date.now()}); }
+function _pendApply(snap){
+  if(!_pend.size) return; const now=Date.now();
+  _pend.forEach((e,k)=>{
+    if(now-e.t>90000){ _pend.delete(k); return; }     // השרת לא לקח את זה — לשחרר
+    const i=k.indexOf(':'), node=k.slice(0,i), id=k.slice(i+1);
+    const bag=snap[node]||(snap[node]={});
+    const sv=(id in bag)?bag[id]:null;
+    if(_eq(sv,e.v)){ _pend.delete(k); return; }       // השרת אישר
+    if(e.v==null) delete bag[id]; else bag[id]=e.v;
+  });
+}
+
+/* ---- המרה בין המצב בדף לבין צורת האחסון במסד ----------------------------
+   נשמר רק ההפרש מברירת המחדל (הכל נבחר, כמות 1), בדיוק כמו בקידוד הקישור.
+   כך המסד נשאר קטן, ופריט חדש שיתווסף ל-data.js נכנס לרשימה מעצמו.        */
+function localToSnap(){
+  const q={}, d=defaults();
+  // `id in d` מסנן מפתחות יתומים (פריט מותאם שנמחק ונשאר לו ערך ב-state)
+  // כדי שלא ייסחבו לתוך המסד המשותף.
+  Object.keys(state).forEach(id=>{ if((id in d) && state[id]!==d[id]) q[id]=state[id]; });
+  const custom={}; CUSTOM.forEach(c=>{ if(c&&c.id) custom[c.id]={...c}; });
+  const sections={}; SECTIONS.forEach(s=>{ if(s&&s.id) sections[s.id]={...s}; });
+  return {q,custom,sections};
+}
+function snapToLocal(snap){
+  _applying=true;
+  const q=snap.q||{}, cu=snap.custom||{}, se=snap.sections||{};
+  // CUSTOM קודם — defaults() קורא ל-allItems() וחייב להכיר את הפריטים המותאמים
+  CUSTOM=Object.values(cu).filter(c=>c&&c.id).map(c=>({...c,custom:true}));
+  SECTIONS=Object.values(se).filter(s=>s&&s.id);
+  const st=defaults();
+  Object.keys(q).forEach(id=>{ const n=Number(q[id]); if(Number.isFinite(n)) st[id]=n; });
+  state=st;
+  saveCustom(); saveSections(); save();    // המטמון המקומי משקף את המסד
+  _shadow=localToSnap();
+  _applying=false;
+}
+
+/* ---- דחיפת שינוי -----------------------------------------------------------
+   כל שלוש פונקציות השמירה מצביעות לכאן, אז אין דרך לשכוח להעלות שינוי.
+   הדלתא מחושבת מול `_shadow`, ולכן נשלחים רק המפתחות שבאמת זזו — שני אנשים
+   שעובדים בו-זמנית על פריטים שונים לא דורסים זה את זה.                    */
+function pushDiff(){
+  if(!cloudOn||_applying) return;
+  const now=localToSnap(), was=_shadow||{q:{},custom:{},sections:{}};
+  const patch={};
+  ['q','custom','sections'].forEach(node=>{
+    const a=was[node]||{}, b=now[node]||{}, body={};
+    Object.keys(b).forEach(id=>{ if(!_eq(a[id],b[id])) body[id]=b[id]; });
+    Object.keys(a).forEach(id=>{ if(!(id in b)) body[id]=null; });   // null = מחיקה ב-RTDB
+    if(Object.keys(body).length){ patch[node]=body;
+      Object.keys(body).forEach(id=>_pendMark(node+':'+id, body[id])); }
+  });
+  _shadow=now;
+  Object.entries(patch).forEach(([node,body])=>{
+    fetch(`${HP}/${node}.json`,{method:'PATCH',body:JSON.stringify(body)})
+      .then(r=>{ if(!r.ok) throw 0; })
+      .catch(()=>syncChip('off','⚠️ לא נשמר בענן','הכתיבה האחרונה לא עברה — רעננו את הדף'));
+  });
+}
+
+/* ---- קריאה תקופתית ------------------------------------------------------ */
+let _lastSig='';
+function reRender(){
+  if(view!=='lamps'&&view!=='handles'&&view!=='colors'&&!SECTIONS.find(s=>s.id===view)) view='lamps';
+  renderNav(); renderLamps(); renderHandles(); renderColors(); renderAllSections(); totals();
+}
+function fbPoll(){
+  if(!cloudOn) return;
+  fetch(`${HP}.json`,{cache:'no-store'}).then(r=>r.json()).then(d=>{
+    const snap=d||{};
+    _pendApply(snap);                 // מה שנעשה כאן רגע קודם נשאר למעלה עד אישור השרת
+    const sig=JSON.stringify(snap);
+    if(sig===_lastSig) return;        // בלי השוואה הזו הגריד נבנה מחדש כל 5 שניות והאנימציות קופצות
+    _lastSig=sig;
+    const lbOpen=document.getElementById('lb').classList.contains('open');
+    snapToLocal(snap); reRender(); if(lbOpen) fillLB();
+    syncChip('ok','☁️ מסונכרן','הבחירות נשמרות בלוח המשותף — רועי רואה אותן');
+  }).catch(()=>syncChip('off','⚠️ אין חיבור','הדף ממשיך לעבוד, אבל השינויים לא יוצאים מהמכשיר הזה'));
+}
+
+/* ---- הסנכרון הראשון ----------------------------------------------------- */
+async function cloudInit(){
+  const migrated = localStorage.getItem('home-hp-cloud')==='1';
+  let snap;
+  try{ const r=await fetch(`${HP}.json`,{cache:'no-store'}); snap=(await r.json())||{}; }
+  catch(e){
+    syncChip('off','⚠️ אין חיבור','לא הצלחנו להגיע לענן. הבחירות נשמרות מקומית ולא נמחקו — נסו לרענן');
+    toast('⚠️ אין חיבור לענן — הבחירות נשמרות כרגע במכשיר הזה בלבד'); return;
+  }
+  const mine=localToSnap();
+  const cloudEmpty=!Object.keys(snap.q||{}).length&&!Object.keys(snap.custom||{}).length&&!Object.keys(snap.sections||{}).length;
+  const mineHas=Object.keys(mine.q).length||Object.keys(mine.custom).length||Object.keys(mine.sections).length;
+  cloudOn=true;
+
+  if(!migrated && mineHas){
+    /* 🔴 העלאה לפני כל דבר אחר. בחירות שכבר שמורות בדפדפן הזה הן עבודה אמיתית
+       של יעל, והן לא נמחקות ולא נדרסות — הן נדחפות למסד קודם. איחוד ולא
+       החלפה: מה שכבר בענן נשאר (הוא החדש והמשותף), ומה שקיים רק כאן מצטרף. */
+    const body={ q:{...mine.q,...(snap.q||{})},
+                 custom:{...mine.custom,...(snap.custom||{})},
+                 sections:{...mine.sections,...(snap.sections||{})} };
+    try{
+      const r=await fetch(`${HP}.json`,{method:'PATCH',body:JSON.stringify(body)});
+      if(!r.ok) throw 0; snap=body;
+      toast(cloudEmpty?'☁️ הבחירות שלך הועלו לענן — מעכשיו רועי רואה אותן'
+                      :'☁️ הבחירות מהדפדפן הזה צורפו ללוח המשותף');
+    }catch(e){
+      cloudOn=false;
+      syncChip('off','⚠️ ההעלאה נכשלה','הבחירות שבמכשיר הזה שלמות ולא נמחקו — נסו לרענן');
+      toast('⚠️ ההעלאה לענן נכשלה — שום בחירה מקומית לא נמחקה'); return;
+    }
+  }
+  localStorage.setItem('home-hp-cloud','1');
+  if(location.hash.indexOf('#s=')===0){
+    // קישור קפוא מלפני הסנכרון. אם הלוח המשותף כבר מכיל משהו — הוא לא נדרס.
+    history.replaceState(null,'',location.pathname);
+    if(!cloudEmpty) toast('הלוח כבר מסונכרן — הקישור הישן לא נטען כדי לא לדרוס בחירות');
+  }
+  snapToLocal(snap); reRender();
+  _lastSig=JSON.stringify(snap);
+  syncChip('ok','☁️ מסונכרן','הבחירות נשמרות בלוח המשותף — רועי רואה אותן');
+  setInterval(fbPoll,5000);
+}
+
 function loadSections(){ try{ SECTIONS = JSON.parse(localStorage.getItem('home-sections')||'[]'); }catch(e){ SECTIONS=[]; } }
-function saveSections(){ try{ localStorage.setItem('home-sections', JSON.stringify(SECTIONS)); }catch(e){} }
+function saveSections(){ try{ localStorage.setItem('home-sections', JSON.stringify(SECTIONS)); }catch(e){} pushDiff(); }
 function allLamps(){ return LAMPS.concat(CUSTOM.filter(c=>!c.section||c.section==='lamps')); }
 function sectionItems(sid){ return CUSTOM.filter(c=>c.section===sid); }
 function allItems(){ return LAMPS.concat(CUSTOM, HANDLES); }
 function LGROUPS(){ return CUSTOM.some(c=>c.group==='אחר') ? BASE_LGROUPS.concat('אחר') : BASE_LGROUPS; }
 function defaults(){ const s={}; allItems().forEach(l=>s[l.id]=1); COLORS.forEach(c=>s[c.id]=1); return s; }
 function loadCustom(){ try{ CUSTOM = JSON.parse(localStorage.getItem('home-custom')||'[]'); }catch(e){ CUSTOM=[]; } }
-function saveCustom(){ try{ localStorage.setItem('home-custom', JSON.stringify(CUSTOM)); }catch(e){} }
+function saveCustom(){ try{ localStorage.setItem('home-custom', JSON.stringify(CUSTOM)); }catch(e){} pushDiff(); }
+function hashSeed(){
+  const m=location.hash.match(/#s=([A-Za-z0-9\-_]+)/); if(!m) return null;
+  try{ const obj=JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')))));
+    if(!obj) return null;
+    return obj.q ? {q:obj.q, c:obj.c||[], s:obj.s||[]} : {q:obj, c:[], s:[]};
+  }catch(e){ return null; }
+}
 function loadState(){
   loadCustom(); loadSections();
-  const m = location.hash.match(/#s=([A-Za-z0-9\-_]+)/);
-  if(m){ try{
-    const obj = JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')))));
-    if(obj && obj.q){ CUSTOM = obj.c||[]; saveCustom(); SECTIONS = obj.s||[]; saveSections(); state={...defaults(),...obj.q}; }
-    else state={...defaults(),...obj};
-    save(); return;
-  }catch(e){} }
-  try{ const ls=localStorage.getItem('home-picks'); if(ls){ state={...defaults(),...JSON.parse(ls)}; return; } }catch(e){}
-  state = defaults();
+  // קישור #s= נטען רק אם המכשיר הזה עוד לא הצטרף ללוח המשותף. אחרי שהצטרף,
+  // קישור ישן הוא תמונת מצב מיושנת ואין שום סיבה שידרוס את מה שמשותף עכשיו.
+  const seed = localStorage.getItem('home-hp-cloud')==='1' ? null : hashSeed();
+  if(seed){ CUSTOM=seed.c; SECTIONS=seed.s; state={...defaults(),...seed.q}; }
+  else {
+    try{ const ls=localStorage.getItem('home-picks'); state = ls ? {...defaults(),...JSON.parse(ls)} : defaults(); }
+    catch(e){ state=defaults(); }
+  }
+  _shadow=localToSnap();   // הבסיס לדלתא; cloudInit יחליף אותו בתמונת המצב מהשרת
 }
-function save(){ try{ localStorage.setItem('home-picks', JSON.stringify(state)); }catch(e){} }
+function save(){ try{ localStorage.setItem('home-picks', JSON.stringify(state)); }catch(e){} pushDiff(); }
 function encState(){
   const diff={}, d=defaults();
   for(const k in state) if(state[k]!==d[k]) diff[k]=state[k];
@@ -476,7 +650,13 @@ function setQty(id,q,btn){
   else if(item&&item.section&&item.section!=='lamps') renderSectionGrid(item.section);
   else renderLampGrid();
 }
-function resetAll(){ if(confirm('לאפס את כל הבחירות?')){ state=defaults(); save(); history.replaceState(null,'',location.pathname); renderLamps(); renderHandles(); renderColors(); renderAllSections(); } }
+function resetAll(){
+  // האיפוס חל על הלוח המשותף, לא רק על הדפדפן הזה — צריך לומר את זה לפני הלחיצה.
+  const msg = cloudOn ? 'לאפס את כל הבחירות?\n\nהלוח משותף — האיפוס יחול גם על רועי ועל המכשירים האחרים.'
+                      : 'לאפס את כל הבחירות?';
+  if(confirm(msg)){ state=defaults(); save(); history.replaceState(null,'',location.pathname);
+    renderLamps(); renderHandles(); renderColors(); renderAllSections(); }
+}
 
 /* ---------- lightbox ---------- */
 function openLB(id){
@@ -862,8 +1042,15 @@ function delCustom(id){
 
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2400); }
 function copyLink(){
-  const url=location.origin+location.pathname+'#s='+encState();
-  navigator.clipboard.writeText(url).then(()=>toast('הקישור הועתק — שלחו אותו בוואטסאפ 🎉'));
+  // פעם זה היה קישור עם תמונת מצב קפואה בתוכו (#s=...), ולכן כל שינוי דרש לשלוח
+  // קישור חדש. עכשיו הלוח עצמו משותף, אז מה שמשתפים הוא הכתובת הרגילה.
+  if(!cloudOn){
+    navigator.clipboard.writeText(location.origin+location.pathname+'#s='+encState())
+      .then(()=>toast('אין חיבור לענן — הועתק קישור עם תמונת מצב קפואה'));
+    return;
+  }
+  navigator.clipboard.writeText(location.origin+location.pathname)
+    .then(()=>toast('הקישור הועתק — מי שפותח אותו רואה את אותו לוח, חי 🎉'));
 }
 function copySummary(){
   let lines=['🏠 הבית שלנו — בחירת תאורה וגוונים','']; let sum=0;
@@ -882,6 +1069,7 @@ function copySummary(){
 }
 
 loadState(); renderLamps(); renderHandles(); renderColors(); renderNav(); checkIncomingAdd();
+cloudInit();   // ציור ראשון מהמטמון המקומי, ואז המסד המשותף משתלט
 </script>
 </body>
 </html>
