@@ -367,11 +367,22 @@ function pushDiff(){
       Object.keys(body).forEach(id=>_pendMark(node+':'+id, body[id])); }
   });
   _shadow=now;
-  Object.entries(patch).forEach(([node,body])=>{
-    fetch(`${HP}/${node}.json`,{method:'PATCH',body:JSON.stringify(body)})
-      .then(r=>{ if(!r.ok) throw 0; })
-      .catch(()=>syncChip('off','⚠️ לא נשמר בענן','הכתיבה האחרונה לא עברה — רעננו את הדף'));
-  });
+  Object.entries(patch).forEach(([node,body])=>sendPatch(node,body,1));
+}
+/* כתיבה שנכשלה היא בחירה שאבדה, ולכן היא לא מסתיימת בהודעה בלבד: ניסיון
+   חוזר אחד, ורק אם גם הוא נפל — המחוון מאדים ונשאר אדום עד שכתיבה תעבור.
+   `_wfail` גם מונע מהפולינג להחזיר אותו לירוק בזמן שכתיבה באמת חסרה. */
+let _wfail=0;
+function sendPatch(node,body,tries){
+  fetch(`${HP}/${node}.json`,{method:'PATCH',body:JSON.stringify(body)})
+    .then(r=>{ if(!r.ok) throw 0;
+      if(_wfail>0 && --_wfail===0)
+        syncChip('ok','☁️ מסונכרן','הבחירות נשמרות בלוח המשותף — רועי רואה אותן'); })
+    .catch(()=>{
+      if(tries>0){ setTimeout(()=>sendPatch(node,body,tries-1),3000); return; }
+      _wfail++;
+      syncChip('off','⚠️ לא נשמר בענן','שינוי אחד לא עבר. רעננו את הדף — מה שבמכשיר הזה שלם');
+    });
 }
 
 /* ---- קריאה תקופתית ------------------------------------------------------ */
@@ -380,18 +391,35 @@ function reRender(){
   if(view!=='lamps'&&view!=='handles'&&view!=='colors'&&!SECTIONS.find(s=>s.id===view)) view='lamps';
   renderNav(); renderLamps(); renderHandles(); renderColors(); renderAllSections(); totals();
 }
+let _misses=0;
 function fbPoll(){
   if(!cloudOn) return;
-  fetch(`${HP}.json`,{cache:'no-store'}).then(r=>r.json()).then(d=>{
-    const snap=d||{};
-    _pendApply(snap);                 // מה שנעשה כאן רגע קודם נשאר למעלה עד אישור השרת
-    const sig=JSON.stringify(snap);
-    if(sig===_lastSig) return;        // בלי השוואה הזו הגריד נבנה מחדש כל 5 שניות והאנימציות קופצות
-    _lastSig=sig;
-    const lbOpen=document.getElementById('lb').classList.contains('open');
-    snapToLocal(snap); reRender(); if(lbOpen) fillLB();
-    syncChip('ok','☁️ מסונכרן','הבחירות נשמרות בלוח המשותף — רועי רואה אותן');
-  }).catch(()=>syncChip('off','⚠️ אין חיבור','הדף ממשיך לעבוד, אבל השינויים לא יוצאים מהמכשיר הזה'));
+  let got=false;   // הדגל שמבדיל "לא הגיעו נתונים" מ"הגיעו ואז נפלה הציור"
+  fetch(`${HP}.json`,{cache:'no-store'}).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(d=>{
+      got=true;
+      // 🔴 הירוק נקבע כאן, לפני ההשוואה. אחרת כשל חולף אחד היה מאדים את
+      // המחוון לתמיד, כי פולינג שמחזיר בדיוק אותה תמונת מצב יוצא מוקדם
+      // ולא היה מגיע לשורה הזו. מחוון תקוע באדום על לוח שעובד מצוין הוא
+      // בדיוק אותו נזק לאמון שה-localStorage עשה.
+      _misses=0;
+      // כל עוד כתיבה אחת באמת חסרה, אסור לומר "מסונכרן" רק כי הקריאה עבדה.
+      if(!_wfail) syncChip('ok','☁️ מסונכרן','הבחירות נשמרות בלוח המשותף — רועי רואה אותן');
+      const snap=d||{};
+      _pendApply(snap);               // מה שנעשה כאן רגע קודם נשאר למעלה עד אישור השרת
+      const sig=JSON.stringify(snap);
+      if(sig===_lastSig) return;      // בלי השוואה הזו הגריד נבנה מחדש כל 5 שניות והאנימציות קופצות
+      _lastSig=sig;
+      const lbOpen=document.getElementById('lb').classList.contains('open');
+      snapToLocal(snap); reRender(); if(lbOpen) fillLB();
+    })
+    .catch(e=>{
+      // שגיאת ציור אינה נתק, ואסור לדווח עליה כנתק — זה שולח לחפש בעיית רשת
+      // שלא קיימת. הנתונים הגיעו ונשמרו, רק המסך לא התרענן.
+      if(got){ console.error('home-picks: render failed after a good poll', e); return; }
+      // וכשל רשת בודד הוא כמעט תמיד רעש חולף: מאדימים רק אחרי שניים ברצף.
+      if(++_misses>=2) syncChip('off','⚠️ אין חיבור','הדף ממשיך לעבוד, אבל השינויים לא יוצאים מהמכשיר הזה');
+    });
 }
 
 /* ---- הסנכרון הראשון ----------------------------------------------------- */
